@@ -77,6 +77,8 @@ import com.stratio.crossdata.core.query.SelectParsedQuery;
 import com.stratio.crossdata.core.query.SelectValidatedQuery;
 import com.stratio.crossdata.core.query.StorageParsedQuery;
 import com.stratio.crossdata.core.query.StorageValidatedQuery;
+import com.stratio.crossdata.core.security.*;
+import com.stratio.crossdata.core.security.SecurityManager;
 import com.stratio.crossdata.core.statements.*;
 import com.stratio.crossdata.core.validator.requirements.ValidationTypes;
 
@@ -91,7 +93,12 @@ public class Validator {
     private Normalizator normalizator = null;
 
     public IValidatedQuery validate(IParsedQuery parsedQuery) throws ValidationException, IgnoreQueryException {
+        validatePermissions(parsedQuery);
         return validate(parsedQuery, new ArrayList<TableName>());
+    }
+
+    private void validatePermissions(IParsedQuery parsedQuery) {
+        SecurityManager.MANAGER.isPermitted(parsedQuery.getSessionId(),"Crossdata",new ArrayList<String>(),new ArrayList<String>());
     }
 
     /**

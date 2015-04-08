@@ -24,6 +24,7 @@ import com.stratio.crossdata.common.result.Result
 import com.stratio.crossdata.core.metadata.MetadataManagerException
 import com.stratio.crossdata.core.query.{IParsedQuery, IValidatedQuery}
 import com.stratio.crossdata.core.validator.Validator
+import com.stratio.crossdata.server.config.ServerConfig
 import org.apache.log4j.Logger
 
 object ValidatorActor {
@@ -35,8 +36,8 @@ object ValidatorActor {
  * @param planner The associated planner actor.
  * @param validator The associated com.stratio.com.stratio.crossdata.core.validator.Validator}.
  */
-class ValidatorActor(planner: ActorRef, validator: Validator) extends Actor with TimeTracker {
-
+class ValidatorActor(planner: ActorRef, validator: Validator) extends Actor with TimeTracker with ServerConfig {
+  val securityClass: String = config.getString("config.security")
   /**
    * Name of the timer published through JMX.
    */
