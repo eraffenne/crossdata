@@ -36,8 +36,8 @@ object ValidatorActor {
  * @param planner The associated planner actor.
  * @param validator The associated com.stratio.com.stratio.crossdata.core.validator.Validator}.
  */
-class ValidatorActor(planner: ActorRef, validator: Validator) extends Actor with TimeTracker with ServerConfig {
-  val securityClass: String = config.getString("config.security")
+class ValidatorActor(planner: ActorRef, validator: Validator) extends Actor with TimeTracker {
+
   /**
    * Name of the timer published through JMX.
    */

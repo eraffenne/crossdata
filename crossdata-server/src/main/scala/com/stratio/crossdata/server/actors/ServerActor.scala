@@ -44,7 +44,7 @@ class ServerActor(engine: Engine, cluster: Cluster) extends Actor with ServerCon
   val hostname = config.getString("akka.remote.netty.tcp.hostname")
   val resizer = DefaultResizer(lowerBound = 2, upperBound = 15)
   val securityClass: String = config.getString("config.security")
-  val auth: Boolean = config.getBoolean("config.authentication")
+
 
 
   val loadWatcherActorRef = context.actorOf(LoadWatcherActor.props(hostname), "loadWatcherActor")
@@ -64,11 +64,7 @@ class ServerActor(engine: Engine, cluster: Cluster) extends Actor with ServerCon
   com.stratio.crossdata.core.security.SecurityManager.MANAGER.init(securityClass)
 
 
-  /**
-   * Check if user authentication is enabled.
-   * @return A Boolean whatever the result is.
-   */
-  def isAuthEnable(): Boolean = auth
+
 
   /**
    * Check if the user and pass are allowed to access to Crossdata Server.

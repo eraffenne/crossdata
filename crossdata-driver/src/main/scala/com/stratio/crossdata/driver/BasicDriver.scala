@@ -45,6 +45,7 @@ object BasicDriver extends DriverConfig {
   val balancing: Boolean = config.getBoolean("config.balancing")
   val serverPathName: String = config.getString("config.serverPathName")
   val crossdataServerClusterName: String = config.getString("config.crossdataServerClusterName")
+  val auth: Boolean = config.getBoolean("config.authentication")
 
   def getBasicDriverConfigFromFile: BasicDriverConfig = {
     logger.debug("RetryTimes    --> " + retryTimes)
@@ -110,6 +111,11 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     this(BasicDriver.getBasicDriverConfigFromFile(servers))
   }
 
+  /**
+   * Check if user authentication is enabled.
+   * @return A Boolean whatever the result is.
+   */
+  def isAuthEnable(): Boolean = BasicDriver.auth
 
   /**
    * Release connection to CrossdataServer.
