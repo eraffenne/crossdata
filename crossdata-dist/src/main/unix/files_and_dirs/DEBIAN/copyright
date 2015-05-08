@@ -1,4 +1,6 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Copyright: 2014, Stratio, Inc. All rights reserved
-License: Stratio License available at http://www.stratio.com/licenses
-Files: *
+Copyright:
+    2014, Stratio, Inc. All rights reserved
+License:
+    Apache License, Version 2.0
+    http://www.apache.org/licenses/LICENSE-2.0t

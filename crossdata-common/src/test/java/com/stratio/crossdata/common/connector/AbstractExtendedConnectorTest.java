@@ -117,22 +117,22 @@ public class AbstractExtendedConnectorTest {
     }
 
 
-    @Test
-    public void shouldReturnCatalogMetadata(){
-
-
-        Option<CatalogMetadata> catalogMetadata = mock(Option.class);
-        CatalogName catalogName = mock(CatalogName.class);
-
-        when(connectorApp.getCatalogMetadata(catalogName, 10)).thenReturn(catalogMetadata);
-
-        //Experimentation
-        Option<CatalogMetadata> result = abstractExtendedConnector.getCatalogMetadata(catalogName, 10);
-
-        //Expectations
-        Assert.assertNotNull(result);
-        verify(connectorApp).getCatalogMetadata(catalogName, 10);
-    }
+//    @Test
+//    public void shouldReturnCatalogMetadata(){
+//
+//
+//        Option<CatalogMetadata> catalogMetadata = mock(Option.class);
+//        CatalogName catalogName = mock(CatalogName.class);
+//
+//        when(connectorApp.getCatalogMetadata(catalogName, 10)).thenReturn(catalogMetadata);
+//
+//        //Experimentation
+//        Option<CatalogMetadata> result = abstractExtendedConnector.getCatalogMetadata(catalogName, 10);
+//
+//        //Expectations
+//        Assert.assertNotNull(result);
+//        verify(connectorApp).getCatalogMetadata(catalogName, 10);
+//    }
 
     static class AbstractExtendedConnectorTestImpl extends AbstractExtendedConnector{
 
