@@ -91,14 +91,14 @@
     </dependencies>
     <build>
         <plugins>
- 	   <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-deploy-plugin</artifactId>
-               <version>2.8.2</version>
-               <configuration>
-                   <skip>true</skip>
-               </configuration>
-           </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.2</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>appassembler-maven-plugin</artifactId>
@@ -208,182 +208,185 @@
             </plugin>
         </plugins>
     </build>
-        <profiles>
-            <profile>
-                <id>package-rpm</id>
-                <build>
-                    <plugins>
-                        <plugin>
-                            <groupId>com.stratio.mojo.unix</groupId>
-                            <artifactId>unix-maven-plugin</artifactId>
-                            <version>1.1.2</version>
-                            <extensions>true</extensions>
-                            <inherited>false</inherited>
+
+    
+    <profiles>
+        <profile>
+            <id>package-rpm</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.stratio.mojo.unix</groupId>
+                        <artifactId>unix-maven-plugin</artifactId>
+                        <version>1.1.2</version>
+                        <extensions>true</extensions>
+                        <inherited>false</inherited>
 
 
-                            <configuration>
+                        <configuration>
 
-                                <contact><![CDATA[Stratio <meta@stratio.com>]]></contact>
-                                <contactEmail>meta@stratio.com</contactEmail>
-                                <rpm>
+                            <contact><![CDATA[Stratio <meta@stratio.com>]]></contact>
+                            <contactEmail>meta@stratio.com</contactEmail>
+                            <rpm>
+
+                                <group>stratio</group>
+                                <requires>apache-commons-daemon-jsvc, htop</requires>
+                            </rpm>
+
+                            <architecture>noarch</architecture>
+
+                            <defaults>
+                                <fileAttributes>
+                                    <user>stratio</user>
                                     <group>stratio</group>
-                                    <requires>apache-commons-daemon-jsvc, htop</requires>
-                                </rpm>
+                                    <mode>0755</mode>
+                                </fileAttributes>
+                            </defaults>
+                            <!-- Supported x86_64 noarch amd64 i386-->
+                            <architecture>x86_64</architecture>
+                            <outputFileName>aaaaaaaqa</outputFileName>
 
-                                <architecture>noarch</architecture>
+                            <assembly>
+                                <mkdirs>
+                                    <paths>
+                                        <path>etc/sds/crossdata</path>
+                                        <path>etc/default</path>
+                                    </paths>
+                                </mkdirs>
+                                <copyDirectory>
+                                    <from>target/crossdata-dist-${project.version}/bin</from>
+                                    <to>opt/sds/crossdata/bin</to>
+                                </copyDirectory>
+                                <copyDirectory>
+                                    <from>target/crossdata-dist-${project.version}/conf</from>
+                                    <to>etc/sds/crossdata</to>
+                                </copyDirectory>
+                                <copyDirectory>
+                                    <from>target/crossdata-dist-${project.version}/lib</from>
+                                    <to>opt/sds/crossdata/lib</to>
+                                </copyDirectory>
+                                <copyDirectory>
+                                    <from>src/main/unix/files_and_dirs/etc/default</from>
+                                    <to>etc/default</to>
+                                </copyDirectory>
+                                <copyFile>
+                                    <path>src/main/include/README.md</path>
+                                    <toFile>opt/sds/crossdata/README.md</toFile>
+                                </copyFile>
+                                <copyFile>
+                                    <path>target/crossdata-dist-${project.version}/LICENSE</path>
+                                    <toFile>opt/sds/crossdata/LICENSE</toFile>
+                                </copyFile>
+                                <copyFile>
+                                    <path>target/crossdata-dist-${project.version}/NOTICE</path>
+                                    <toFile>opt/sds/crossdata/NOTICE</toFile>
+                                </copyFile>
+                            </assembly>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>create-installers</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>package-rpm</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
 
-                                <defaults>
-                                    <fileAttributes>
-                                        <user>stratio</user>
-                                        <group>stratio</group>
-                                        <mode>0755</mode>
-                                    </fileAttributes>
-                                </defaults>
-                                <!-- Supported x86_64 noarch amd64 i386-->
+        <profile>
+            <id>package-deb</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.stratio.mojo.unix</groupId>
+                        <artifactId>unix-maven-plugin</artifactId>
+                        <version>1.1.2</version>
+                        <!--<version>1.0-alpha-9</version>-->
+                        <extensions>true</extensions>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <contact><![CDATA[Stratio <meta@stratio.com>]]></contact>
+                            <contactEmail>meta@stratio.com</contactEmail>
+                            <!--<size>2048</size>-->
 
+                            <deb>
+                                <depends>htop</depends>
+                                <section>devel</section>
+                                <priority>extra</priority>
+                            </deb>
+                            <defaults>
+                                <fileAttributes>
+                                    <user>stratio</user>
+                                    <group>stratio</group>
+                                    <mode>0755</mode>
+                                </fileAttributes>
+                            </defaults>
+                            <!-- Supported all amd64-->
+                            <architecture>amd64</architecture>
+                            <outputFileName>aaaaaaaqa</outputFileName>
 
-
-                                <assembly>
-                                    <mkdirs>
-                                        <paths>
-                                            <path>etc/sds/crossdata</path>
-                                            <path>etc/default</path>
-                                        </paths>
-                                    </mkdirs>
-                                    <copyDirectory>
-                                        <from>target/crossdata-dist-${project.version}/bin</from>
-                                        <to>opt/sds/crossdata/bin</to>
-                                    </copyDirectory>
-                                    <copyDirectory>
-                                        <from>target/crossdata-dist-${project.version}/conf</from>
-                                        <to>etc/sds/crossdata</to>
-                                    </copyDirectory>
-                                    <copyDirectory>
-                                        <from>target/crossdata-dist-${project.version}/lib</from>
-                                        <to>opt/sds/crossdata/lib</to>
-                                    </copyDirectory>
-                                    <copyDirectory>
-                                        <from>src/main/unix/files_and_dirs/etc/default</from>
-                                        <to>etc/default</to>
-                                    </copyDirectory>
-                                    <copyFile>
-                                        <path>src/main/include/README.md</path>
-                                        <toFile>opt/sds/crossdata/README.md</toFile>
-                                    </copyFile>
-                                    <copyFile>
-                                        <path>target/crossdata-dist-${project.version}/LICENSE</path>
-                                        <toFile>opt/sds/crossdata/LICENSE</toFile>
-                                    </copyFile>
-                                    <copyFile>
-                                        <path>target/crossdata-dist-${project.version}/NOTICE</path>
-                                        <toFile>opt/sds/crossdata/NOTICE</toFile>
-                                    </copyFile>
-                                </assembly>
-                            </configuration>
-                            <executions>
-                                <execution>
-                                    <id>create-installers</id>
-                                    <phase>package</phase>
-                                    <goals>
-                                        <goal>package-rpm</goal>
-                                    </goals>
-                                </execution>
-                            </executions>
-                        </plugin>
-                    </plugins>
-                </build>
-            </profile>
-
-
-            <profile>
-                <id>package-deb</id>
-                <build>
-                    <plugins>
-                        <plugin>
-                            <groupId>com.stratio.mojo.unix</groupId>
-                            <artifactId>unix-maven-plugin</artifactId>
-                            <version>1.1.2</version>
-                            <!--<version>1.0-alpha-9</version>-->
-                            <extensions>true</extensions>
-                            <inherited>false</inherited>
-                            <configuration>
-                                <contact><![CDATA[Stratio <meta@stratio.com>]]></contact>
-                                <contactEmail>meta@stratio.com</contactEmail>
-                                <!--<size>2048</size>-->
-
-                                <deb>
-                                    <depends>htop</depends>
-                                    <section>devel</section>
-                                    <priority>extra</priority>
-                                </deb>
-                                <defaults>
-                                    <fileAttributes>
-                                        <user>stratio</user>
-                                        <group>stratio</group>
-                                        <mode>0755</mode>
-                                    </fileAttributes>
-                                </defaults>
-                                <!-- Supported all amd64-->
-                                <!--<architecture>amd64</architecture>-->
-
-                                <assembly>
-                                    <mkdirs>
-                                        <paths>
-                                            <path>etc/sds/crossdata</path>
-                                            <path>etc/default</path>
-                                        </paths>
-                                    </mkdirs>
-                                    <copyDirectory>
-                                        <from>target/crossdata-dist-${project.version}/bin</from>
-                                        <to>opt/sds/crossdata/bin</to>
-                                    </copyDirectory>
-                                    <copyDirectory>
-                                        <from>target/crossdata-dist-${project.version}/conf</from>
-                                        <to>etc/sds/crossdata</to>
-                                    </copyDirectory>
-                                    <copyDirectory>
-                                        <from>target/crossdata-dist-${project.version}/lib</from>
-                                        <to>opt/sds/crossdata/lib</to>
-                                    </copyDirectory>
-                                    <copyDirectory>
-                                        <from>src/main/unix/files_and_dirs/etc/default</from>
-                                        <to>etc/default</to>
-                                    </copyDirectory>
-                                    <copyFile>
-                                        <path>src/main/unix/files_and_dirs/DEBIAN/conffiles</path>
-                                        <toFile>DEBIAN/conffiles</toFile>
-                                    </copyFile>
-                                    <copyFile>
-                                        <path>src/main/unix/files_and_dirs/DEBIAN/copyright</path>
-                                        <toFile>DEBIAN/copyright</toFile>
-                                    </copyFile>
-                                    <copyFile>
-                                        <path>src/main/include/README.md</path>
-                                        <toFile>opt/sds/crossdata/README.md</toFile>
-                                    </copyFile>
-                                    <copyFile>
-                                        <path>target/crossdata-dist-${project.version}/LICENSE</path>
-                                        <toFile>opt/sds/crossdata/LICENSE</toFile>
-                                    </copyFile>
-                                    <copyFile>
-                                        <path>target/crossdata-dist-${project.version}/NOTICE</path>
-                                        <toFile>opt/sds/crossdata/NOTICE</toFile>
-                                    </copyFile>
-                                </assembly>
-                            </configuration>
-                            <executions>
-                                <execution>
-                                    <id>create-installers</id>
-                                    <phase>package</phase>
-                                    <goals>
-                                        <goal>package-deb</goal>
-                                    </goals>
-                                </execution>
-                            </executions>
-                        </plugin>
-                    </plugins>
-                </build>
-            </profile>
+                            <assembly>
+                                <mkdirs>
+                                    <paths>
+                                        <path>etc/sds/crossdata</path>
+                                        <path>etc/default</path>
+                                    </paths>
+                                </mkdirs>
+                                <copyDirectory>
+                                    <from>target/crossdata-dist-${project.version}/bin</from>
+                                    <to>opt/sds/crossdata/bin</to>
+                                </copyDirectory>
+                                <copyDirectory>
+                                    <from>target/crossdata-dist-${project.version}/conf</from>
+                                    <to>etc/sds/crossdata</to>
+                                </copyDirectory>
+                                <copyDirectory>
+                                    <from>target/crossdata-dist-${project.version}/lib</from>
+                                    <to>opt/sds/crossdata/lib</to>
+                                </copyDirectory>
+                                <copyDirectory>
+                                    <from>src/main/unix/files_and_dirs/etc/default</from>
+                                    <to>etc/default</to>
+                                </copyDirectory>
+                                <copyFile>
+                                    <path>src/main/unix/files_and_dirs/DEBIAN/conffiles</path>
+                                    <toFile>DEBIAN/conffiles</toFile>
+                                </copyFile>
+                                <copyFile>
+                                    <path>src/main/unix/files_and_dirs/DEBIAN/copyright</path>
+                                    <toFile>DEBIAN/copyright</toFile>
+                                </copyFile>
+                                <copyFile>
+                                    <path>src/main/include/README.md</path>
+                                    <toFile>opt/sds/crossdata/README.md</toFile>
+                                </copyFile>
+                                <copyFile>
+                                    <path>target/crossdata-dist-${project.version}/LICENSE</path>
+                                    <toFile>opt/sds/crossdata/LICENSE</toFile>
+                                </copyFile>
+                                <copyFile>
+                                    <path>target/crossdata-dist-${project.version}/NOTICE</path>
+                                    <toFile>opt/sds/crossdata/NOTICE</toFile>
+                                </copyFile>
+                            </assembly>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>create-installers</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>package-deb</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
 </project>
