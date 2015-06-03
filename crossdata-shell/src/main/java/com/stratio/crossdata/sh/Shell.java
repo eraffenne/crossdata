@@ -413,7 +413,7 @@ public class Shell {
 
     private void executeAsyncRawQuery(String toExecute) {
         try {
-            Result result = crossdataDriver.executeAsyncRawQuery(toExecute, resultHandler,sessionId);
+            Result result = crossdataDriver.executeAsyncRawQuery(toExecute, resultHandler);
             LOG.info(ConsoleUtils.stringResult(result));
             updatePrompt(result);
         } catch (Exception ex) {
@@ -450,10 +450,10 @@ public class Shell {
                         break;
                     } else {
                         if(useAsync){
-                            result = crossdataDriver.executeAsyncRawQuery(query, resultHandler, sessionId);
+                            result = crossdataDriver.executeAsyncRawQuery(query, resultHandler);
                             Thread.sleep(WAIT_TIME_FOR_ASYNC);
                         } else {
-                            result = crossdataDriver.executeRawQuery(query,sessionId);
+                            result = crossdataDriver.executeRawQuery(query);
                         }
                         LOG.info(ConsoleUtils.stringResult(result));
                         updatePrompt(result);

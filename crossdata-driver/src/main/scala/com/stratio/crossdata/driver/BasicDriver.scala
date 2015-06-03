@@ -18,27 +18,26 @@
 
 package com.stratio.crossdata.driver
 
+import java.io.File
 import java.util.UUID
 
-import akka.actor.{ActorRef, ActorSelection, ActorSystem}
+import akka.actor.{ActorSelection, ActorSystem}
 import akka.contrib.pattern.ClusterClient
-import akka.pattern.ask
 import com.stratio.crossdata.common.ask.{APICommand, Command, Connect, Query}
 import com.stratio.crossdata.common.data.{ConnectorName, DataStoreName, _}
-import com.stratio.crossdata.common.exceptions.validation.{ExistNameException, NotExistNameException}
 import com.stratio.crossdata.common.exceptions._
+import com.stratio.crossdata.common.exceptions.validation.{ExistNameException, NotExistNameException}
 import com.stratio.crossdata.common.manifest.CrossdataManifest
+import com.stratio.crossdata.common.metadata.DataType
 import com.stratio.crossdata.common.result._
 import com.stratio.crossdata.communication.Disconnect
-import com.stratio.crossdata.driver.actor.{RemoteSupervisor, ProxyActor}
+import com.stratio.crossdata.driver.actor.ProxyActor
 import com.stratio.crossdata.driver.config.{BasicDriverConfig, DriverConfig, DriverSectionConfig, ServerSectionConfig}
 import com.stratio.crossdata.driver.result.SyncDriverResultHandler
-import com.stratio.crossdata.driver.utils.{QueryData, ManifestUtils, RetryPolitics}
+import com.stratio.crossdata.driver.utils.{ManifestUtils, QueryData, RetryPolitics}
 import org.apache.log4j.Logger
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
-import akka.util.Timeout
 
 object BasicDriver extends DriverConfig {
   /**
@@ -102,7 +101,7 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
   }
   //For Futures
   implicit val context = system.dispatcher
-  var userId: String = ""
+  var sessionId: String = ""
   var userName: String = ""
   var password: String = ""
   var currentCatalog: String = ""
@@ -151,7 +150,7 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
       }
       case connectResult: ConnectResult => {
         logger.info("Connection established")
-        userId = connectResult.getSessionId
+        sessionId = connectResult.getSessionId
         result
       }
     }
@@ -162,14 +161,14 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
    */
   @throws(classOf[ConnectionException])
   def disconnect(): Unit = {
-    logger.info("Disconnecting user: " + userId + " to " + contactPoints)
-    val result = retryPolitics.askRetry(proxyActor, new Disconnect(userId), 5 second, retry = 2)
+    logger.info("Disconnecting user: " + sessionId + " to " + contactPoints)
+    val result = retryPolitics.askRetry(proxyActor, new Disconnect(sessionId), 5 second, retry = 2)
     result match {
       case errorResult: ErrorResult => {
         throw new ConnectionException(errorResult.getErrorMessage)
       }
       case connectResult: DisconnectResult => {
-        userId = ""
+        sessionId = ""
       }
     }
   }
@@ -181,8 +180,8 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
    */
   @throws(classOf[ConnectionException])
   def asyncExecuteQuery(query: com.stratio.crossdata.driver.querybuilder.Query,
-                        callback: IDriverResultHandler, sessionId: String): Result = {
-    asyncExecuteQuery(query.toString, callback, sessionId)
+                        callback: IDriverResultHandler): Result = {
+    asyncExecuteQuery(query.toString, callback)
   }
 
   /**
@@ -191,19 +190,19 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
    * @param callback The callback object.
    */
   @throws(classOf[ConnectionException])
-  def asyncExecuteQuery(query: String, callback: IDriverResultHandler, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def asyncExecuteQuery(query: String, callback: IDriverResultHandler): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID()
     queries.put(queryId.toString, new QueryData(callback, query, sessionId))
-    sendQuery(new Query(queryId.toString, currentCatalog, query, userId, sessionId))
+    sendQuery(new Query(queryId.toString, currentCatalog, query, sessionId))
     InProgressResult.createInProgressResult(queryId.toString)
   }
 
   @throws(classOf[ConnectionException])
   def sendQuery(message: AnyRef) {
-    if (userId.isEmpty) {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     proxyActor ! message
@@ -219,8 +218,8 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
   @throws(classOf[ValidationException])
   @throws(classOf[ExecutionException])
   @throws(classOf[UnsupportedException])
-  def executeQuery(query: com.stratio.crossdata.driver.querybuilder.Query, sessionId: String): Result = {
-    executeQuery(query.toString, sessionId)
+  def executeQuery(query: com.stratio.crossdata.driver.querybuilder.Query): Result = {
+    executeQuery(query.toString)
   }
 
   /**
@@ -233,36 +232,36 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
   @throws(classOf[ValidationException])
   @throws(classOf[ExecutionException])
   @throws(classOf[UnsupportedException])
-  def executeQuery(query: String, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def executeQuery(query: String): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
     val callback = new SyncDriverResultHandler
     queries.put(queryId, new QueryData(callback, query, sessionId))
-    sendQuery(new Query(queryId, currentCatalog, query, userId, sessionId))
+    sendQuery(new Query(queryId, currentCatalog, query, sessionId))
     val r = callback.waitForResult()
     logger.info("Query " + queryId + " finished. " + queries.get(queryId).getExecutionInfo())
     queries.remove(queryId)
     r
   }
 
-  def executeRawQuery(command: String, sessionId: String): Result = {
-    executeAsyncRawQuery(command, null, sessionId)
+  def executeRawQuery(command: String): Result = {
+    executeAsyncRawQuery(command, null)
   }
 
-  def executeAsyncRawQuery(command: String, callback: IDriverResultHandler, sessionId: String): Result = {
+  def executeAsyncRawQuery(command: String, callback: IDriverResultHandler): Result = {
     var result:Result = null.asInstanceOf[Result]
     val input:String = command.replaceAll("\\s+", " ").trim
     if(input.toLowerCase.startsWith("use ")){
-      result = updateCatalog(input,sessionId)
+      result = updateCatalog(input)
     } else {
-      result = executeApiCall(input,sessionId)
+      result = executeApiCall(input)
       if(result.isInstanceOf[EmptyResult]){
         if(callback != null){
-          result = asyncExecuteQuery(input, callback, sessionId)
+          result = asyncExecuteQuery(input, callback)
         } else {
-          result = executeQuery(input, sessionId)
+          result = executeQuery(input)
         }
       }
     }
@@ -270,7 +269,7 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
   }
 
   @throws(classOf[NotExistNameException])
-  def updateCatalog(toExecute: String,sessionId: String): Result = {
+  def updateCatalog(toExecute: String): Result = {
     //val newCatalog: String = toExecute.toLowerCase.replace("use ", "").replace(";", "").trim
     val newCatalog: String = toExecute.substring(4).replace(";", "").trim
     var currentCatalog: String = getCurrentCatalog
@@ -278,7 +277,7 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
       setCurrentCatalog(newCatalog)
       currentCatalog = newCatalog
     } else {
-      val catalogs: java.util.List[String] = (listCatalogs(sessionId).asInstanceOf[MetadataResult]).getCatalogList
+      val catalogs: java.util.List[String] = (listCatalogs().asInstanceOf[MetadataResult]).getCatalogList
       if (catalogs.contains(newCatalog)) {
         setCurrentCatalog(newCatalog)
         currentCatalog = newCatalog
@@ -289,7 +288,7 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     return CommandResult.createCommandResult(new CatalogName(currentCatalog));
   }
 
-  def executeApiCall(command: String, sessionId: String): Result = {
+  def executeApiCall(command: String): Result = {
     /**
      * Constant to define the prefix for explain plan operations.
      */
@@ -298,70 +297,70 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     var result: Result = null
     result = EmptyResult.createEmptyResult()
     if (command.toLowerCase.startsWith("describe")) {
-      result = executeDescribe(command,sessionId)
+      result = executeDescribe(command)
     } else if (command.toLowerCase.startsWith("add connector") || command.toLowerCase.startsWith("add datastore")) {
-      result = sendManifest(command,sessionId)
+      result = sendManifest(command)
     } else if (command.toLowerCase.startsWith("reset serverdata")) {
-      result = resetServerdata(sessionId)
+      result = resetServerdata()
     } else if (command.toLowerCase.startsWith("clean metadata")) {
-      result = cleanMetadata(sessionId)
+      result = cleanMetadata()
     } else if (command.toLowerCase.startsWith("drop datastore")) {
       //result = dropManifest(
       // CrossdataManifest.TYPE_DATASTORE, command.toLowerCase.replace("drop datastore ", "").replace(";", "").trim)
       result = dropManifest(
-        CrossdataManifest.TYPE_DATASTORE, command.substring(15).replace(";", "").trim,sessionId)
+        CrossdataManifest.TYPE_DATASTORE, command.substring(15).replace(";", "").trim)
     } else if (command.toLowerCase.startsWith("drop connector")) {
       //result = dropManifest(
       // CrossdataManifest.TYPE_CONNECTOR, command.toLowerCase.replace("drop connector ", "").replace(";", "").trim)
       result = dropManifest(
-        CrossdataManifest.TYPE_CONNECTOR, command.substring(15).replace(";", "").trim,sessionId)
+        CrossdataManifest.TYPE_CONNECTOR, command.substring(15).replace(";", "").trim)
     } else if (command.toLowerCase.startsWith(EXPLAIN_PLAN_TOKEN)) {
-      result = explainPlan(command,sessionId)
+      result = explainPlan(command)
     } else if (command.toLowerCase.startsWith(STOP_PROCESS_TOKEN)){
-      result = stopProcess(command.substring(STOP_PROCESS_TOKEN.length).replace(";", "").trim, sessionId);
+      result = stopProcess(command.substring(STOP_PROCESS_TOKEN.length).replace(";", "").trim);
     }
     return result
   }
 
 
-  def stopProcess(processQueryId: String, sessionId: String): Result = {
-    if(userId.isEmpty){
+  def stopProcess(processQueryId: String): Result = {
+    if(sessionId.isEmpty){
       throw new ConnectionException("You must connect to cluster")
     }
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
     params.add(processQueryId)
     val queryId = UUID.randomUUID().toString
-    retryPolitics.askRetry(proxyActor, new Command(queryId, APICommand.STOP_PROCESS, params,sessionId), 5 second)
+    retryPolitics.askRetry(proxyActor, new Command(queryId, APICommand.STOP_PROCESS, params, sessionId), 5 second)
 
   }
 
 
-  def discoverMetadata(clusterName: String, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def discoverMetadata(clusterName: String): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
-    executeQuery("DISCOVER METADATA ON CLUSTER " + clusterName + ";", sessionId);
+    executeQuery("DISCOVER METADATA ON CLUSTER " + clusterName + ";");
   }
 
-  def importCatalogs(clusterName: String, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def importCatalogs(clusterName: String): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
-    executeQuery("IMPORT CATALOGS FROM CLUSTER " + clusterName + ";", sessionId)
+    executeQuery("IMPORT CATALOGS FROM CLUSTER " + clusterName + ";")
   }
 
-  def importCatalog(clusterName: String, catalogName: String, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def importCatalog(clusterName: String, catalogName: String): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
-    executeQuery("IMPORT CATALOG " + catalogName + " FROM CLUSTER " + clusterName + ";", sessionId)
+    executeQuery("IMPORT CATALOG " + catalogName + " FROM CLUSTER " + clusterName + ";")
   }
 
-  def importTable(clusterName: String, tableName: String, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def importTable(clusterName: String, tableName: String): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
-    executeQuery("IMPORT TABLE " + tableName + " FROM CLUSTER " + clusterName + ";", sessionId)
+    executeQuery("IMPORT TABLE " + tableName + " FROM CLUSTER " + clusterName + ";")
   }
 
   /**
@@ -371,7 +370,7 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
    * @return The operation result.
    */
   @throws(classOf[ManifestException])
-  def sendManifest(sentence: String, sessionId: String): Result = {
+  def sendManifest(sentence: String): Result = {
     val tokens: Array[String] = sentence.split(" ")
     if (tokens.length < 3) {
       throw new ManifestException("ERROR: Invalid ADD syntax")
@@ -384,33 +383,33 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     } else {
       throw new ManifestException("ERROR: Unknown type: " + tokens(1))
     }
-    addManifest(typeManifest, tokens(2), sessionId)
+    addManifest(typeManifest, tokens(2))
   }
 
-  def executeDescribe(command: String, sessionId: String): Result = {
+  def executeDescribe(command: String): Result = {
     var result: Result = null
     if (command.toLowerCase.startsWith("describe system")) {
-      result = describeSystem(sessionId)
+      result = describeSystem()
     } else if (command.toLowerCase.startsWith("describe datastores")) {
-      result = describeDatastores(sessionId)
+      result = describeDatastores()
     } else if (command.toLowerCase.startsWith("describe datastore ")) {
       //val datastore = command.toLowerCase.replace("describe datastore ", "").replace(";", "").trim
       val datastore = command.substring(19).replace(";", "").trim
-      result = describeDatastore(new DataStoreName(datastore),sessionId)
+      result = describeDatastore(new DataStoreName(datastore))
     } else if (command.toLowerCase.startsWith("describe clusters")) {
-      result = describeClusters(sessionId)
+      result = describeClusters()
     } else if (command.toLowerCase.startsWith("describe cluster ")) {
       //val cluster = command.toLowerCase.replace("describe cluster ", "").replace(";", "").trim
       val cluster = command.substring(17).replace(";", "").trim
-      result = describeCluster(new ClusterName(cluster),sessionId)
+      result = describeCluster(new ClusterName(cluster))
     } else if (command.toLowerCase.startsWith("describe connectors")) {
-      result = describeConnectors(sessionId)
+      result = describeConnectors()
     } else if (command.toLowerCase.startsWith("describe connector ")) {
       //val connector = command.toLowerCase.replace("describe connector ", "").replace(";", "").trim
       val connector = command.substring(19).replace(";", "").trim
-      result = describeConnector(new ConnectorName(connector),sessionId)
+      result = describeConnector(new ConnectorName(connector))
     } else if (command.toLowerCase.startsWith("describe catalogs")) {
-      result = listCatalogs(sessionId)
+      result = listCatalogs()
     } else if (command.toLowerCase.startsWith("describe catalog")) {
       //val catalog = command.toLowerCase.replace("describe catalog ", "").replace(";", "").trim
       val catalog = command.substring(17).replace(";", "").trim
@@ -418,14 +417,14 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
       if(catalog.isEmpty){
         catalogName = new CatalogName(getCurrentCatalog)
       }
-      result = describeCatalog(catalogName,sessionId)
+      result = describeCatalog(catalogName)
     } else if (command.toLowerCase.startsWith("describe tables")) {
       if (command.toLowerCase.startsWith("describe tables from ")) {
         //val catalog = command.toLowerCase.replace("describe tables from ", "").replace(";", "").trim
         val catalog = command.substring(21).replace(";", "").trim
-        result = describeTables(new CatalogName(catalog),sessionId)
+        result = describeTables(new CatalogName(catalog))
       } else if (!getCurrentCatalog.isEmpty) {
-        result = describeTables(new CatalogName(getCurrentCatalog),sessionId)
+        result = describeTables(new CatalogName(getCurrentCatalog))
       } else {
         result = Result.createErrorResult(new Exception("Catalog not specified"))
       }
@@ -437,11 +436,11 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
         //val table = command.toLowerCase.replace("describe table ", "").replace(";", "").trim
         val table = command.substring(15).replace(";", "").trim
         val tokens: Array[String] = table.split("\\.")
-        result = describeTable(new TableName(tokens(0), tokens(1)),sessionId)
+        result = describeTable(new TableName(tokens(0), tokens(1)))
       } else if (!getCurrentCatalog.isEmpty) {
         //val table = command.toLowerCase.replace("describe table ", "").replace(";", "").trim
         val table = command.substring(15).replace(";", "").trim
-        result = describeTable(new TableName(getCurrentCatalog, table),sessionId)
+        result = describeTable(new TableName(getCurrentCatalog, table))
       } else {
         result = Result.createErrorResult(new Exception("Catalog not specified"))
       }
@@ -456,12 +455,12 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
    * @return A MetadataResult with a list of catalogs, or the object with hasError set
    *         containing the error message.
    */
-  def listCatalogs(sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def listCatalogs(): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
-    val result = retryPolitics.askRetry(proxyActor, new Command(queryId, APICommand.LIST_CATALOGS, null,sessionId),
+    val result = retryPolitics.askRetry(proxyActor, new Command(queryId, APICommand.LIST_CATALOGS, null, sessionId),
       30 second,
       retry = 2)
     if(result.isInstanceOf[MetadataResult]){
@@ -476,14 +475,14 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
    * @return A MetadataResult with a list of tables, or the object with hasError set
    *         containing the error message.
    */
-  def listTables(catalogName: String,sessionId: String): MetadataResult = {
-    if (userId.isEmpty) {
+  def listTables(catalogName: String): MetadataResult = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
     params.add(catalogName)
     val queryId = UUID.randomUUID().toString
-    val result = retryPolitics.askRetry(proxyActor, new Command(queryId, APICommand.LIST_TABLES, params,sessionId),
+    val result = retryPolitics.askRetry(proxyActor, new Command(queryId, APICommand.LIST_TABLES, params, sessionId),
       30 second, retry = 2)
     if(result.isInstanceOf[MetadataResult]){
       result.asInstanceOf[MetadataResult]
@@ -496,8 +495,8 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
    * List the existing tables in a database catalog.
    * @return A MetadataResult with a map of columns.
    */
-  def listFields(catalogName: String, tableName: String, sessionId: String): MetadataResult = {
-    if (userId.isEmpty) {
+  def listFields(catalogName: String, tableName: String): MetadataResult = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
@@ -519,8 +518,8 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
    * @return A CommandResult with a string.
    */
   @throws(classOf[ManifestException])
-  def addManifest(manifest: CrossdataManifest, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def addManifest(manifest: CrossdataManifest): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
@@ -538,8 +537,8 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
   @throws(classOf[ManifestException])
   @throws(classOf[ExistNameException])
   @throws(classOf[ApiException])
-  def addManifest(manifestType: Int, path: String, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def addManifest(manifestType: Int, path: String): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     // Create CrossdataManifest object from XML file
@@ -555,7 +554,7 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
         throw new ManifestException(e)
       }
     }
-    addManifest(manifest, sessionId)
+    addManifest(manifest)
   }
 
   /**
@@ -567,8 +566,8 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
   @throws(classOf[ManifestException])
   @throws(classOf[NotExistNameException])
   @throws(classOf[ApiException])
-  def dropManifest(manifestType: Int, manifestName: String, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def dropManifest(manifestType: Int, manifestName: String): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
@@ -584,8 +583,8 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
    * Reset metadata in server.
    * @return A CommandResult with a string.
    */
-  def resetServerdata(sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def resetServerdata(): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
@@ -602,8 +601,8 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
    * Clean metadata related to catalogs in server.
    * @return A CommandResult with a string.
    */
-  def cleanMetadata(sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def cleanMetadata(): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
@@ -620,12 +619,12 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
    * Describe the connectors available.
    * @return A CommandResult with the list.
    */
-  def describeConnectors(sessionId: String):Result = {
-    if (userId.isEmpty) {
+  def describeConnectors():Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
-    val result = retryPolitics.askRetry(proxyActor, new Command(queryId, APICommand.DESCRIBE_CONNECTORS, null,sessionId),
+    val result = retryPolitics.askRetry(proxyActor, new Command(queryId, APICommand.DESCRIBE_CONNECTORS, null, sessionId),
       30 second)
     if(result.isInstanceOf[CommandResult]){
       result.asInstanceOf[CommandResult]
@@ -638,8 +637,8 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
    * Describe a connector.
    * @return A CommandResult with the description of the connector.
    */
-  def describeConnector(connectorName: ConnectorName, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def describeConnector(connectorName: ConnectorName): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
@@ -654,14 +653,14 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     }
   }
 
-  def describeCatalog(catalogName: CatalogName, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def describeCatalog(catalogName: CatalogName): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
     params.add(catalogName)
-    val result = retryPolitics.askRetry(proxyActor, new Command(queryId, APICommand.DESCRIBE_CATALOG, params,sessionId),
+    val result = retryPolitics.askRetry(proxyActor, new Command(queryId, APICommand.DESCRIBE_CATALOG, params, sessionId),
       30 second)
     if(result.isInstanceOf[MetadataResult]){
       result.asInstanceOf[MetadataResult]
@@ -674,14 +673,14 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
    * Describe a datastore.
    * @return A CommandResult with the description of the datastore.
    */
-  def describeDatastore(datastoreName: DataStoreName, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def describeDatastore(datastoreName: DataStoreName): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
     params.add(datastoreName)
-    val result = retryPolitics.askRetry(proxyActor, new Command(queryId, APICommand.DESCRIBE_DATASTORE, params,sessionId),
+    val result = retryPolitics.askRetry(proxyActor, new Command(queryId, APICommand.DESCRIBE_DATASTORE, params, sessionId),
       30 second)
     if(result.isInstanceOf[CommandResult]){
       result.asInstanceOf[CommandResult]
@@ -690,8 +689,8 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     }
   }
 
-  def describeTables(catalogName: CatalogName, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def describeTables(catalogName: CatalogName): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
@@ -706,8 +705,8 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     }
   }
 
-  def describeTable(tableName: TableName, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def describeTable(tableName: TableName): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
@@ -722,8 +721,8 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     }
   }
 
-  def describeCluster(clusterName: ClusterName, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def describeCluster(clusterName: ClusterName): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
@@ -738,8 +737,8 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     }
   }
 
-  def describeDatastores(sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def describeDatastores(): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
@@ -752,8 +751,8 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     }
   }
 
-  def describeClusters(sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def describeClusters(): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
@@ -770,12 +769,12 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
    * Describe the system.
    * @return A CommandResult with the description of the system.
    */
-  def describeSystem(sessionId: String):Result = {
-    if (userId.isEmpty) {
+  def describeSystem():Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
-    val result = retryPolitics.askRetry(proxyActor, new Command(queryId, APICommand.DESCRIBE_SYSTEM, null,sessionId), 30 second)
+    val result = retryPolitics.askRetry(proxyActor, new Command(queryId, APICommand.DESCRIBE_SYSTEM, null, sessionId), 30 second)
     if(result.isInstanceOf[CommandResult]){
       result.asInstanceOf[CommandResult]
     } else {
@@ -783,13 +782,28 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     }
   }
 
+  private def createInsertRows(): String ={
+
+  }
+
+  def insertRows(tableName: String,
+                 file: File,
+                 batchSize: Integer,
+                 pause: TimeUnit): Result ={
+    if (sessionId.isEmpty) {
+      throw new ConnectionException("You must connect to cluster")
+    }
+    val insertRowsCommand = createInsertRows()
+    executeApiCall(insertRowsCommand)
+  }
+
   /**
    * Return the explained execution workflow for a given query.
    * @param query The user query.
    * @return A Result.
    */
-  def explainPlan(query: String, sessionId: String): Result = {
-    if (userId.isEmpty) {
+  def explainPlan(query: String): Result = {
+    if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]

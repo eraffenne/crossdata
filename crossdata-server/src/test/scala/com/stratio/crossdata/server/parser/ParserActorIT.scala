@@ -72,7 +72,7 @@ class ParserActorIT extends ServerActorTest{
     initializeTablesInfinispan()
     within(6000 millis) {
       parserActor3 ! Query(queryId + (1), catalogName, "SELECT " + catalogName + "." + tableName + ".name FROM " +
-        catalogName + "." + tableName + "; ", user0,"sessionTest")
+        catalogName + "." + tableName + "; ", "sessionTest")
       fishForMessage(6 seconds){
         case msg:QueryResult =>{
           assert(msg.getQueryId()==queryId + (1))
@@ -90,7 +90,7 @@ class ParserActorIT extends ServerActorTest{
     initialize()
     initializeTablesInfinispan()
     within(6000 millis) {
-      parserActor1 ! Query(queryId + (1), mynewcatalog, "create catalog " + mynewcatalog + ";", user0,"sessionTest")
+      parserActor1 ! Query(queryId + (1), mynewcatalog, "create catalog " + mynewcatalog + ";", "sessionTest")
       fishForMessage(6 seconds) {
         case msg: ACK => {
           logger.info(" receiving message of type " + msg.getClass() + "from " + lastSender)
@@ -110,7 +110,7 @@ class ParserActorIT extends ServerActorTest{
     initialize()
     initializeTablesInfinispan()
     within(6000 millis) {
-      parserActor2 ! Query(queryId + (1), mynewcatalog, "create catalog " + mynewcatalog + ";", user0,"sessionTest")
+      parserActor2 ! Query(queryId + (1), mynewcatalog, "create catalog " + mynewcatalog + ";", "sessionTest")
       fishForMessage(6 seconds){
         case msg:ACK=>{
           logger.info("receiving message of type  " + msg.getClass() + "from  " + lastSender)
@@ -130,7 +130,7 @@ class ParserActorIT extends ServerActorTest{
     initialize()
     initializeTablesInfinispan()
     within(6000 millis) {
-      parserActor3 ! Query(queryId + (1), mynewcatalog, "create catalog mynewCatalog;", user0,"sessionTest")
+      parserActor3 ! Query(queryId + (1), mynewcatalog, "create catalog mynewCatalog;", "sessionTest")
       fishForMessage(6 seconds){
         case msg:MetadataResult =>{
           logger.info("receiving message of type " + msg.getClass() + "from " + lastSender)
@@ -146,7 +146,7 @@ class ParserActorIT extends ServerActorTest{
     within(6000 millis) {
       val query="create TABLE mynewCatalog.demo ON CLUSTER " + myClusterName + "(field1 varchar PRIMARY KEY , " +
         "field2 varchar);"
-      parserActor3 ! Query(queryId + (2), mynewcatalog, query,user0,"sessionTest")
+      parserActor3 ! Query(queryId + (2), mynewcatalog, query, "sessionTest")
       fishForMessage(6 seconds){
         case msg:MetadataResult =>{
           logger.info("   receiving message of type " + msg.getClass() + " from " + lastSender)
@@ -166,7 +166,7 @@ class ParserActorIT extends ServerActorTest{
     initializeTablesInfinispan()
     within(6000 millis) {
       val myquery="INSERT INTO  " + catalogName + "." + tableName + " (name, age) VALUES (\"user0\", 88);"
-      parserActor1 ! Query(queryId + (1), catalogName, myquery, user0,"sessionTest")
+      parserActor1 ! Query(queryId + (1), catalogName, myquery, "sessionTest")
       fishForMessage(6 seconds) {
         case msg: ACK => {
           logger.info("receiving    message  of type " + msg.getClass() + "  from " + lastSender)
@@ -187,8 +187,7 @@ class ParserActorIT extends ServerActorTest{
     initializeTablesInfinispan()
     within(6000 millis) {
       val myquery="INSERT INTO " + catalogName + "." + tableName + "(name, age) VALUES  (\"" + user0 + "\", 88);"
-      parserActor2 ! Query(queryId + (1), catalogName, myquery, user0,
-        "sessionTest")
+      parserActor2 ! Query(queryId + (1), catalogName, myquery, "sessionTest")
       fishForMessage(6 seconds){
         case msg:ACK=>{
           logger.info("receiving message of type " + msg.getClass() + "from   " + lastSender)
@@ -209,8 +208,7 @@ class ParserActorIT extends ServerActorTest{
     initializeTablesInfinispan()
     val myquery="INSERT INTO " + catalogName + "." + tableName + "(name, age) VALUES (\"" + user0 + "\", 88);"
     within(6000 millis) {
-      parserActor3 ! Query(queryId + (1), catalogName, myquery, user0,
-        "sessionTest")
+      parserActor3 ! Query(queryId + (1), catalogName, myquery, "sessionTest")
       fishForMessage(6 seconds){
         case msg:StorageResult =>{
           logger.info(" receiving  message  of  type " + msg.getClass() + " from  " + lastSender)

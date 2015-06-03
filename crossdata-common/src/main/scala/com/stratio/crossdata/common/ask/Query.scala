@@ -18,4 +18,4 @@
 
 package com.stratio.crossdata.common.ask
 
-case class Query(queryId: String, catalog: String, statement: String, user: String, sessionId: String)
+case class Query(queryId: String, catalog: String, statement: String, sessionId: String)

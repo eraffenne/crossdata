@@ -93,7 +93,7 @@ public class ClientExample {
         LOG.info("Connected to Crossdata Server");
 
         // RESET SERVER DATA
-        result = basicDriver.cleanMetadata("testSession");
+        result = basicDriver.cleanMetadata();
         assert result != null;
         LOG.info("Server data cleaned");
 
@@ -110,7 +110,7 @@ public class ClientExample {
 
         result = null;
         try {
-            result = basicDriver.addManifest(manifest,"testSession");
+            result = basicDriver.addManifest(manifest);
         } catch (ManifestException ex) {
             LOG.error(ex);
         }
@@ -121,7 +121,7 @@ public class ClientExample {
         result = null;
         try {
             result = basicDriver.executeQuery("ATTACH CLUSTER cassandra_prod ON DATASTORE Cassandra WITH OPTIONS " +
-                    "{'Hosts': '[127.0.0.1]', 'Port': 9042};","testSession");
+                    "{'Hosts': '[127.0.0.1]', 'Port': 9042};");
         } catch (ConnectionException | ValidationException | ExecutionException | UnsupportedException ex) {
             LOG.error(ex);
         }
@@ -141,7 +141,7 @@ public class ClientExample {
 
         result = null;
         try {
-            result = basicDriver.addManifest(manifest,"testSession");
+            result = basicDriver.addManifest(manifest);
         } catch (ManifestException ex) {
             LOG.error(ex);
         }
@@ -162,7 +162,7 @@ public class ClientExample {
 
         result = null;
         try {
-            result = basicDriver.addManifest(manifest,"testSession");
+            result = basicDriver.addManifest(manifest);
         } catch (ManifestException ex) {
             LOG.error(ex);
         }
@@ -173,7 +173,7 @@ public class ClientExample {
         result = null;
         try {
             result = basicDriver.executeQuery("ATTACH CONNECTOR CassandraConnector TO cassandra_prod WITH OPTIONS " +
-                    "{'DefaultLimit': '1000'};","testSession");
+                    "{'DefaultLimit': '1000'};");
         } catch (ConnectionException | ValidationException | ExecutionException | UnsupportedException ex) {
             LOG.error(ex);
         }
@@ -184,7 +184,7 @@ public class ClientExample {
         // ATTACH STRATIO DEEP CONNECTOR
         result = null;
         try {
-            result = basicDriver.executeQuery("ATTACH CONNECTOR DeepConnector TO cassandra_prod WITH OPTIONS {};","testSession");
+            result = basicDriver.executeQuery("ATTACH CONNECTOR DeepConnector TO cassandra_prod WITH OPTIONS {};");
         } catch (Exception ex) {
             LOG.error(ex);
         }
@@ -195,7 +195,7 @@ public class ClientExample {
         // CREATE CATALOG
         result = null;
         try {
-            result = basicDriver.executeQuery("CREATE CATALOG catalogTest;","testSession");
+            result = basicDriver.executeQuery("CREATE CATALOG catalogTest;");
         } catch (ConnectionException | ValidationException | ExecutionException | UnsupportedException ex) {
             LOG.error(ex);
         }
@@ -209,7 +209,7 @@ public class ClientExample {
         result = null;
         try {
             result = basicDriver.executeQuery("CREATE TABLE tableTest ON CLUSTER cassandra_prod " +
-                    "(id int PRIMARY KEY, serial int, name text, rating double, email text);","testSession");
+                    "(id int PRIMARY KEY, serial int, name text, rating double, email text);");
         } catch (ConnectionException | ValidationException | ExecutionException | UnsupportedException ex) {
             LOG.error(ex);
         }
@@ -220,7 +220,7 @@ public class ClientExample {
         result = null;
         try {
             result = basicDriver.executeQuery("CREATE TABLE tableTest2 ON CLUSTER cassandra_prod " +
-                    "(id int PRIMARY KEY, lastname text, age int, company text);","testSession");
+                    "(id int PRIMARY KEY, lastname text, age int, company text);");
         } catch (ConnectionException | ValidationException | ExecutionException | UnsupportedException ex) {
             LOG.error(ex);
         }
@@ -248,7 +248,7 @@ public class ClientExample {
 
             result = null;
             try {
-                result = basicDriver.executeQuery(sb.toString(),"testSession");
+                result = basicDriver.executeQuery(sb.toString());
             } catch (ConnectionException | ValidationException | ExecutionException | UnsupportedException ex) {
                 LOG.error(ex);
             }
@@ -265,7 +265,7 @@ public class ClientExample {
 
             result = null;
             try {
-                result = basicDriver.executeQuery(sb.toString(),"testSession");
+                result = basicDriver.executeQuery(sb.toString());
             } catch (ConnectionException | ValidationException | ExecutionException | UnsupportedException ex) {
                 LOG.error(ex);
             }
@@ -276,7 +276,7 @@ public class ClientExample {
         // CREATE DEFAULT INDEX
         result = null;
         try {
-            result = basicDriver.executeQuery("CREATE INDEX indexTest ON tableTest(name);","testSession");
+            result = basicDriver.executeQuery("CREATE INDEX indexTest ON tableTest(name);");
         } catch (ConnectionException | ValidationException | ExecutionException | UnsupportedException ex) {
             LOG.error(ex);
         }
@@ -286,7 +286,7 @@ public class ClientExample {
         // CREATE FULL TEXT INDEX
         result = null;
         try {
-            result = basicDriver.executeQuery("CREATE FULL_TEXT INDEX myIndex ON tableTest(email);","testSession");
+            result = basicDriver.executeQuery("CREATE FULL_TEXT INDEX myIndex ON tableTest(email);");
         } catch (ConnectionException | ValidationException | ExecutionException | UnsupportedException ex) {
             LOG.error(ex);
         }

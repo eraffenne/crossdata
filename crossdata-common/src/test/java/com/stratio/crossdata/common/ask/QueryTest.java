@@ -27,7 +27,7 @@ public class QueryTest {
         catalog = "catalogTest";
         statement = "SELECT * FROM tableTest;";
         user = "tester";
-        query = new Query(queryId, catalog, statement, user,sessionId);
+        query = new Query(queryId, catalog, statement, sessionId);
     }
 
     @Test
@@ -40,12 +40,6 @@ public class QueryTest {
     public void testStatement() throws Exception {
         assertTrue(query.statement().equalsIgnoreCase(statement), "'" + query.statement() + "' should be equals to " +
                 System.lineSeparator() + "'" + statement + "'");
-    }
-
-    @Test
-    public void testUser() throws Exception {
-        assertTrue(query.user().equalsIgnoreCase(user), "'" + query.user() + "' should be equals to " +
-                System.lineSeparator() + "'" + user + "'");
     }
 
     @Test

@@ -70,7 +70,7 @@ public class BasicDriverIT {
 
     @AfterClass
     public void clean(){
-        driver.resetServerdata("testSession");
+        driver.resetServerdata();
 
     }
 
@@ -93,7 +93,7 @@ public class BasicDriverIT {
     @Test(timeOut = 8000, dependsOnMethods = {"testConnect"})
     public void testResetServerdata() throws Exception {
         Thread.sleep(500);
-        Result result = driver.resetServerdata("testSession");
+        Result result = driver.resetServerdata();
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -112,7 +112,7 @@ public class BasicDriverIT {
         //URL url = Thread.currentThread().getContextClassLoader().getResource("InMemoryDataStore.xml");
         //String path = url.getPath().replace("crossdata-driver", "crossdata-connector-inmemory");
         String path = url.getPath();
-        Result result = driver.addManifest(CrossdataManifest.TYPE_DATASTORE, path, "testSession");
+        Result result = driver.addManifest(CrossdataManifest.TYPE_DATASTORE, path);
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -128,7 +128,7 @@ public class BasicDriverIT {
     public void testAttachCluster() throws Exception {
         Thread.sleep(500);
         Result result = driver.executeQuery("ATTACH CLUSTER InMemoryCluster ON DATASTORE InMemoryDatastore WITH " +
-                "OPTIONS {'TableRowLimit': 100};","testSession");
+                "OPTIONS {'TableRowLimit': 100};");
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -146,7 +146,7 @@ public class BasicDriverIT {
         URL url = Thread.currentThread().getContextClassLoader().getResource("InMemoryConnector.xml");
         //String path = url.getPath().replace("crossdata-driver", "crossdata-connector-inmemory");
         String path = url.getPath();
-        Result result = driver.addManifest(CrossdataManifest.TYPE_CONNECTOR, path,"testSession");
+        Result result = driver.addManifest(CrossdataManifest.TYPE_CONNECTOR, path);
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -161,7 +161,7 @@ public class BasicDriverIT {
     @Test(timeOut = 8000, dependsOnMethods = {"testAddConnector"})
     public void testAttachConnector() throws Exception {
         Thread.sleep(500);
-        Result result = driver.executeQuery("ATTACH CONNECTOR InMemoryConnector TO InMemoryCluster AND PAGINATION = 5;","testSession");
+        Result result = driver.executeQuery("ATTACH CONNECTOR InMemoryConnector TO InMemoryCluster AND PAGINATION = 5;");
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -176,7 +176,7 @@ public class BasicDriverIT {
     @Test(timeOut = 8000, dependsOnMethods = {"testAttachConnector"})
     public void testCreateCatalog() throws Exception {
         Thread.sleep(500);
-        Result result = driver.executeQuery("CREATE CATALOG catalogTest;","testSession");
+        Result result = driver.executeQuery("CREATE CATALOG catalogTest;");
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -194,7 +194,7 @@ public class BasicDriverIT {
     public void testCreateTable() throws Exception {
         Thread.sleep(500);
         Result result = driver.executeQuery("CREATE TABLE tableTest ON CLUSTER InMemoryCluster" +
-                " (id INT PRIMARY KEY, name TEXT, description TEXT, rating FLOAT);","testSession");
+                " (id INT PRIMARY KEY, name TEXT, description TEXT, rating FLOAT);");
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -209,7 +209,7 @@ public class BasicDriverIT {
     @Test(timeOut = 8000, dependsOnMethods = {"testCreateTable"})
     public void testInsert1() throws Exception {
         Thread.sleep(500);
-        Result result = driver.executeQuery("INSERT INTO tableTest(id, name, description, rating) VALUES (1, 'stratio1', 'Big Data', 5.0);","testSession");
+        Result result = driver.executeQuery("INSERT INTO tableTest(id, name, description, rating) VALUES (1, 'stratio1', 'Big Data', 5.0);");
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -223,7 +223,7 @@ public class BasicDriverIT {
 
     @Test(timeOut = 8000, dependsOnMethods = {"testInsert1"})
     public void testInsert2() throws Exception {
-        Result result = driver.executeQuery("INSERT INTO tableTest(id, name, description, rating) VALUES (2, 'stratio2', 'Crossdata', 8.5);","testSession");
+        Result result = driver.executeQuery("INSERT INTO tableTest(id, name, description, rating) VALUES (2, 'stratio2', 'Crossdata', 8.5);");
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -237,7 +237,7 @@ public class BasicDriverIT {
 
     @Test(timeOut = 8000, dependsOnMethods = {"testInsert2"})
     public void testInsert3() throws Exception {
-        Result result = driver.executeQuery("INSERT INTO tableTest(id, name, description, rating) VALUES (3, 'stratio3', 'One framework to rule all the databases', 4.0);","testSession");
+        Result result = driver.executeQuery("INSERT INTO tableTest(id, name, description, rating) VALUES (3, 'stratio3', 'One framework to rule all the databases', 4.0);");
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -251,7 +251,7 @@ public class BasicDriverIT {
 
     @Test(timeOut = 8000, dependsOnMethods = {"testInsert3"})
     public void testInsert4() throws Exception {
-        Result result = driver.executeQuery("INSERT INTO tableTest(id, name, description, rating) VALUES (4, 'worker', 'Happy', 9.2);","testSession");
+        Result result = driver.executeQuery("INSERT INTO tableTest(id, name, description, rating) VALUES (4, 'worker', 'Happy', 9.2);");
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -265,7 +265,7 @@ public class BasicDriverIT {
 
     @Test(timeOut = 8000, dependsOnMethods = {"testInsert4"})
     public void testInsert5() throws Exception {
-        Result result = driver.executeQuery("INSERT INTO tableTest(id, name, description, rating) VALUES (5, 'worker', 'Learning', 6.5);","testSession");
+        Result result = driver.executeQuery("INSERT INTO tableTest(id, name, description, rating) VALUES (5, 'worker', 'Learning', 6.5);");
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -279,7 +279,7 @@ public class BasicDriverIT {
 
     @Test(timeOut = 8000, dependsOnMethods = {"testInsert5"})
     public void testInsert6() throws Exception {
-        Result result = driver.executeQuery("INSERT INTO tableTest(id, name, description, rating) VALUES (6, 'employee', 'Working', 7.0);","testSession");
+        Result result = driver.executeQuery("INSERT INTO tableTest(id, name, description, rating) VALUES (6, 'employee', 'Working', 7.0);");
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -294,7 +294,7 @@ public class BasicDriverIT {
     @Test(timeOut = 8000, dependsOnMethods = {"testInsert6"})
     public void testInsert7() throws Exception {
         Result result = driver.executeQuery("INSERT INTO tableTest(id, name, description, rating) VALUES (7, " +
-                "'employee', 'Improving', 2);","testSession");
+                "'employee', 'Improving', 2);");
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -310,7 +310,7 @@ public class BasicDriverIT {
     public void testAsyncSelect() throws Exception {
         Thread.sleep(500);
         TestResultHandler testResultHandler = new TestResultHandler(2);
-        Result result = driver.asyncExecuteQuery("SELECT * FROM tableTest;", testResultHandler,"testSession");
+        Result result = driver.asyncExecuteQuery("SELECT * FROM tableTest;", testResultHandler);
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -334,7 +334,7 @@ public class BasicDriverIT {
     public void testAsyncSelectFail1() throws Exception {
         Thread.sleep(500);
         TestResultHandler testResultHandler = new TestResultHandler(1);
-        Result result = driver.asyncExecuteQuery("SELECT * FROM tableTest;", testResultHandler,"testSession");
+        Result result = driver.asyncExecuteQuery("SELECT * FROM tableTest;", testResultHandler);
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());
@@ -358,7 +358,7 @@ public class BasicDriverIT {
     public void testAsyncSelectFail2() throws Exception {
         Thread.sleep(500);
         TestResultHandler testResultHandler = new TestResultHandler(3);
-        Result result = driver.asyncExecuteQuery("SELECT * FROM tableTest;", testResultHandler,"testSession");
+        Result result = driver.asyncExecuteQuery("SELECT * FROM tableTest;", testResultHandler);
 
         if(result instanceof ErrorResult){
             LOG.error(((ErrorResult) result).getErrorMessage());

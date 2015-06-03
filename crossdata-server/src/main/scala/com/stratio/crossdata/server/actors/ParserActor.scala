@@ -36,8 +36,8 @@ class ParserActor(validator: ActorRef, parser: Parser) extends Actor with TimeTr
   val log = Logger.getLogger(classOf[ParserActor])
 
   def receive : Receive = {
-    case Query(queryId, catalog, statement, user, sessionId) => {
-      log.info("\nInit Parser Task", queryId, catalog, statement, user)
+    case Query(queryId, catalog, statement, sessionId) => {
+      log.info("\nInit Parser Task", queryId, catalog, statement)
       val timer = initTimer()
       val baseQuery = new BaseQuery(queryId, statement, new CatalogName(catalog), sessionId)
       try {
