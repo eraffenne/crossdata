@@ -19,6 +19,7 @@
 package com.stratio.crossdata.driver
 
 import java.io.File
+import java.util
 import java.util.UUID
 
 import akka.actor.{ActorSelection, ActorSystem}
@@ -28,12 +29,12 @@ import com.stratio.crossdata.common.data.{ConnectorName, DataStoreName, _}
 import com.stratio.crossdata.common.exceptions._
 import com.stratio.crossdata.common.exceptions.validation.{ExistNameException, NotExistNameException}
 import com.stratio.crossdata.common.manifest.CrossdataManifest
-import com.stratio.crossdata.common.metadata.DataType
+import scala.collection.JavaConversions._
 import com.stratio.crossdata.common.result._
 import com.stratio.crossdata.communication.Disconnect
 import com.stratio.crossdata.driver.actor.ProxyActor
 import com.stratio.crossdata.driver.config.{BasicDriverConfig, DriverConfig, DriverSectionConfig, ServerSectionConfig}
-import com.stratio.crossdata.driver.result.SyncDriverResultHandler
+import com.stratio.crossdata.driver.result.{BatchResultHandler, SyncDriverResultHandler}
 import com.stratio.crossdata.driver.utils.{ManifestUtils, QueryData, RetryPolitics}
 import org.apache.log4j.Logger
 
@@ -782,10 +783,7 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     }
   }
 
-  private def createInsertRows(): String ={
-
-  }
-
+  //COPY <file> TO <table-name> WITH BATCHSIZE=100 AND PAUSE=500 ms;
   def insertRows(tableName: String,
                  file: File,
                  batchSize: Integer,
@@ -793,8 +791,15 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
-    val insertRowsCommand = createInsertRows()
-    executeApiCall(insertRowsCommand)
+    val queryId = UUID.randomUUID().toString
+
+    val firstLine = io.Source.fromFile(file).getLines().next()
+    val params: List[String] = tableName :: firstLine :: Nil
+    val command = new Command(queryId, APICommand.CALCULATE_BATCH, params, sessionId)
+    val batchResultHandler:BatchResultHandler = new BatchResultHandler();
+    queries.put(queryId.toString, new QueryData(batchResultHandler, command.toString, sessionId))
+    sendQuery(command)
+    InProgressResult.createInProgressResult(queryId.toString)
   }
 
   /**
