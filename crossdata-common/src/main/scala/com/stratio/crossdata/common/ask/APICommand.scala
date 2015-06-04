@@ -43,6 +43,6 @@ object APICommand extends Enumeration {
   val CLEAN_METADATA = Value("CLEAN_METADATA")
   val EXPLAIN_PLAN = Value("EXPLAIN_PLAN")
   val STOP_PROCESS = Value("STOP_PROCESS")
-  val CALCULATE_BATCH = Value("CALCULATE_BATCH")
+  val PLAN_INSERT = Value("PLAN_INSERT")
 
 }

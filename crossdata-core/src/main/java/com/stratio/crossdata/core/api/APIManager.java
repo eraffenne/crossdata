@@ -277,12 +277,25 @@ public class APIManager {
         } else if (APICommand.EXPLAIN_PLAN().equals(cmd.commandType())) {
             LOG.info(PROCESSING + APICommand.EXPLAIN_PLAN().toString());
             result = explainPlan(cmd);
+        } else if(APICommand.PLAN_INSERT().equals(cmd.commandType())){
+            LOG.info(PROCESSING + APICommand.PLAN_INSERT().toString());
+            result = planInsert(cmd);
         } else{
             result = Result.createUnsupportedOperationErrorResult("Command " + cmd.commandType() + " not supported");
             LOG.error(ErrorResult.class.cast(result).getErrorMessage());
         }
         result.setQueryId(cmd.queryId());
         return result;
+    }
+
+    private Result planInsert(Command cmd) {
+        //TODO: Validate table name & column names
+        //TODO: Plan query & Choose connector
+        //TODO: Create topic
+        //TODO: Send topic subscription to chosen connector
+        //TODO: Wait for result from chosen connector
+        //TODO: Send topic production to driver/client (sender)
+        return CommandResult.createCommandResult("topic_name").withQueryId(cmd.queryId());
     }
 
     private Result describeSystem() {

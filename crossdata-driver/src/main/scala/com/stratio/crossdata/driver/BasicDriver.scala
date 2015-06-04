@@ -792,10 +792,9 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
       throw new ConnectionException("You must connect to cluster")
     }
     val queryId = UUID.randomUUID().toString
-
-    val firstLine = io.Source.fromFile(file).getLines().next()
-    val params: List[String] = tableName :: firstLine :: Nil
-    val command = new Command(queryId, APICommand.CALCULATE_BATCH, params, sessionId)
+    val firstLine = io.Source.fromFile(file).getLines().next().split(",").toList
+    val params: List[AnyRef] = tableName :: firstLine :: Nil
+    val command = new Command(queryId, APICommand.PLAN_INSERT, params, sessionId)
     val batchResultHandler:BatchResultHandler = new BatchResultHandler();
     queries.put(queryId.toString, new QueryData(batchResultHandler, command.toString, sessionId))
     sendQuery(command)
