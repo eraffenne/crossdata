@@ -19,8 +19,7 @@
 package com.stratio.crossdata.driver.utils
 
 import com.stratio.crossdata.common.manifest._
-import java.io.FileInputStream
-import java.io.InputStream
+import java.io.{FileNotFoundException, FileInputStream, InputStream}
 import javax.xml.validation.{Schema, SchemaFactory}
 import javax.xml.XMLConstants
 import javax.xml.bind.{JAXBElement, Unmarshaller, JAXBContext}
@@ -41,6 +40,7 @@ object ManifestUtils {
    * @throws FileNotFoundException If the XML file does not exist.
    */
   @throws(classOf[ManifestException])
+  @throws(classOf[FileNotFoundException])
   def parseFromXmlToManifest(manifestType: Int, path: String): CrossdataManifest = {
     if (manifestType == CrossdataManifest.TYPE_DATASTORE) {
       return parseFromXmlToDataStoreManifest(new FileInputStream(path))
@@ -58,6 +58,7 @@ object ManifestUtils {
    * @throws ManifestException If the XML is not valid.
    */
   @throws(classOf[ManifestException])
+  @throws(classOf[FileNotFoundException])
   def parseFromXmlToManifest(manifestType: Int, path: InputStream): CrossdataManifest = {
     if (manifestType == CrossdataManifest.TYPE_DATASTORE) {
       return parseFromXmlToDataStoreManifest(path)
@@ -68,6 +69,7 @@ object ManifestUtils {
   }
 
   @throws(classOf[ManifestException])
+  @throws(classOf[FileNotFoundException])
   private def parseFromXmlToDataStoreManifest(path: InputStream): DataStoreType = {
     try {
       val sf: SchemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
@@ -86,6 +88,7 @@ object ManifestUtils {
   }
 
   @throws(classOf[ManifestException])
+  @throws(classOf[FileNotFoundException])
   private def parseFromXmlToConnectorManifest(path: InputStream): CrossdataManifest = {
     try {
       val sf: SchemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)

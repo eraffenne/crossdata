@@ -21,6 +21,8 @@ package com.stratio.crossdata.sh.manifest;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
+import java.io.FileNotFoundException;
+
 import org.testng.annotations.Test;
 
 import com.stratio.crossdata.common.exceptions.ManifestException;
@@ -37,7 +39,7 @@ public class CrossdataManifestTest {
         try {
             manifest = ManifestUtils.parseFromXmlToManifest(CrossdataManifest.TYPE_DATASTORE,
                     getClass().getResourceAsStream("/com/stratio/crossdata/connector/DataStoreDefinition.xml"));
-        } catch (ManifestException e) {
+        } catch (ManifestException | FileNotFoundException e) {
             fail("CrossdataManifest validation failed", e);
         }
 
@@ -106,7 +108,7 @@ public class CrossdataManifestTest {
         try {
             manifest = ManifestUtils.parseFromXmlToManifest(CrossdataManifest.TYPE_CONNECTOR,
                     getClass().getResourceAsStream("/com/stratio/crossdata/connector/ConnectorDefinition.xml"));
-        } catch (ManifestException e) {
+        } catch (ManifestException | FileNotFoundException e) {
             fail("CrossdataManifest validation failed", e);
         }
 

@@ -380,6 +380,7 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     if (tokens(1).equalsIgnoreCase("datastore")) {
       typeManifest = CrossdataManifest.TYPE_DATASTORE
     } else if (tokens(1).equalsIgnoreCase("connector")) {
+    } else if (tokens(1).equalsIgnoreCase("connector")) {
       typeManifest = CrossdataManifest.TYPE_CONNECTOR
     } else {
       throw new ManifestException("ERROR: Unknown type: " + tokens(1))
@@ -548,14 +549,16 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     try {
       manifest = ManifestUtils.parseFromXmlToManifest(
         manifestType, path.replace(";", "").replace("\"", "").replace("'", ""))
+      addManifest(manifest, sessionId)
     }
     catch {
       case e: Any => {
-        logger.error("CrossdataManifest couldn't be parsed", e)
-        throw new ManifestException(e)
+        //logger.error("CrossdataManifest couldn't be parsed", e)
+        val result = ConnectToConnectorResult.createFailureConnectResult("",new ManifestException(e))
+        result
       }
     }
-    addManifest(manifest, sessionId)
+
   }
 
   /**

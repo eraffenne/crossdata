@@ -159,12 +159,28 @@ class ConnectorActor(connectorApp: ConnectorApp, connector: IConnector) extends 
 
     case connManifest: GetConnectorManifest => {
       logger.info(sender + " asked for my connector manifest ")
-      sender ! ReplyConnectorManifest(connectorApp.getConnectorManifest)
+      try {
+        sender ! ReplyConnectorManifest(connectorApp.getConnectorManifest)
+      } catch {
+        case e: Exception => {
+          logger.error(e.getMessage)
+          val result = ConnectToConnectorResult.createFailureConnectResult("",e)
+          sender ! result
+        }
+      }
     }
     case datManifest: GetDatastoreManifest => {
       logger.info(sender + " asked for my datastore manifest")
-      for (datastore <- connectorApp.getDatastoreManifest){
-        sender ! ReplyDatastoreManifest(datastore)
+      try{
+        for (datastore <- connectorApp.getDatastoreManifest){
+          sender ! ReplyDatastoreManifest(datastore)
+        }
+      }catch {
+        case e:Exception => {
+          logger.error(e.getMessage)
+          val result = ConnectToConnectorResult.createFailureConnectResult("",e)
+          sender ! result
+        }
       }
     }
 
