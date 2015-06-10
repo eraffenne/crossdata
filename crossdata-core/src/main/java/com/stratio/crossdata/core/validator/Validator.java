@@ -76,7 +76,6 @@ public class Validator {
             validatedQuery = new StorageValidatedQuery((StorageParsedQuery) parsedQuery);
             ((StorageValidatedQuery) validatedQuery).setSqlQuery(parsedQuery.getStatement().toString());
         } else if (parsedQuery instanceof SelectParsedQuery) {
-
             validatedQuery = createValidatedQuery(validatorHelper.getNormalizator(), ((SelectParsedQuery) parsedQuery));
         }
         return validatedQuery;

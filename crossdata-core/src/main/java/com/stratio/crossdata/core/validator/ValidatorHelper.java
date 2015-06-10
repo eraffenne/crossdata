@@ -403,15 +403,14 @@ public class ValidatorHelper {
         if (statement instanceof AttachClusterStatement) {
             name = (((AttachClusterStatement) statement).getDatastoreName());
             hasIfExists = ((AttachClusterStatement) statement).isIfNotExists();
-        }
-        if (statement instanceof DropDataStoreStatement) {
+        } else if (statement instanceof DropDataStoreStatement) {
             name = new DataStoreName(((DropDataStoreStatement) statement).getName());
         }
         validateName(exist, name, hasIfExists);
     }
 
     /**
-     * @see ValidationTypes#MUST_EXIST_INDEX.
+     * @see ValidationTypes#MUST_EXIST_COLUMN.
      * @param stmt
      * @param exist
      * @throws NotExistNameException
@@ -424,11 +423,14 @@ public class ValidatorHelper {
         if (stmt instanceof AlterTableStatement) {
             columnName = ((AlterTableStatement) stmt).getColumn();
             validateName(exist, columnName, false);
-        }
-
-        if (stmt instanceof CreateIndexStatement) {
+        } else if (stmt instanceof CreateIndexStatement) {
             CreateIndexStatement createIndexStatement = (CreateIndexStatement) stmt;
-            for (ColumnName column : createIndexStatement.getTargetColumns()) {
+            for (ColumnName column: createIndexStatement.getTargetColumns()) {
+                validateName(exist, column, false);
+            }
+        } else if(stmt instanceof InsertBatchStatement){
+            InsertBatchStatement insertBatchStatement = (InsertBatchStatement) stmt;
+            for(ColumnName column: insertBatchStatement.getColumnNames()){
                 validateName(exist, column, false);
             }
         }
@@ -508,6 +510,9 @@ public class ValidatorHelper {
         } else if (stmt instanceof ImportMetadataStatement) {
             ImportMetadataStatement importMetadataStatement = (ImportMetadataStatement) stmt;
             tableName = importMetadataStatement.getTableName();
+        } else if (stmt instanceof InsertBatchStatement) {
+            InsertBatchStatement insertBatchStatement = (InsertBatchStatement) stmt;
+            tableName = insertBatchStatement.getTableName();
         } else {
             throw new IgnoreQueryException(stmt.getClass().getCanonicalName() + " not supported yet.");
         }
@@ -717,7 +722,7 @@ public class ValidatorHelper {
         CrossdataStatement stmt = parsedQuery.getStatement();
         if (stmt instanceof InsertIntoStatement) {
             InsertIntoStatement insertIntoStatement = (InsertIntoStatement) stmt;
-            List<ColumnName> columnNameList = insertIntoStatement.getIds();
+            List<ColumnName> columnNameList = insertIntoStatement.getColumns();
 
             if (insertIntoStatement.getTypeValues() == InsertIntoStatement.TYPE_VALUES_CLAUSE) {
                 List<Selector> selectorList = insertIntoStatement.getCellValues();
@@ -770,8 +775,9 @@ public class ValidatorHelper {
 
         }
     }
-    
+
     public Normalizator getNormalizator() {
         return normalizator;
     }
+
 }

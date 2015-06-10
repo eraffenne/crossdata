@@ -57,6 +57,7 @@ import com.stratio.crossdata.common.exceptions.validation.NotExistNameException;
 import com.stratio.crossdata.common.executionplan.ExecutionType;
 import com.stratio.crossdata.common.executionplan.ManagementWorkflow;
 import com.stratio.crossdata.common.executionplan.ResultType;
+import com.stratio.crossdata.common.executionplan.StorageWorkflow;
 import com.stratio.crossdata.common.manifest.BehaviorsType;
 import com.stratio.crossdata.common.manifest.ConnectorFunctionsType;
 import com.stratio.crossdata.common.manifest.ConnectorType;
@@ -81,6 +82,7 @@ import com.stratio.crossdata.common.metadata.TableMetadata;
 import com.stratio.crossdata.common.result.CommandResult;
 import com.stratio.crossdata.common.result.ErrorResult;
 import com.stratio.crossdata.common.result.MetadataResult;
+import com.stratio.crossdata.common.result.PlanInsertResult;
 import com.stratio.crossdata.common.result.ResetServerDataResult;
 import com.stratio.crossdata.common.result.Result;
 import com.stratio.crossdata.common.statements.structures.Selector;
@@ -93,12 +95,15 @@ import com.stratio.crossdata.core.query.BaseQuery;
 import com.stratio.crossdata.core.query.ForceDetachQuery;
 import com.stratio.crossdata.core.query.IParsedQuery;
 import com.stratio.crossdata.core.query.IValidatedQuery;
+import com.stratio.crossdata.core.query.MetadataParsedQuery;
 import com.stratio.crossdata.core.query.MetadataPlannedQuery;
 import com.stratio.crossdata.core.query.MetadataValidatedQuery;
 import com.stratio.crossdata.core.query.SelectPlannedQuery;
 import com.stratio.crossdata.core.query.SelectValidatedQuery;
+import com.stratio.crossdata.core.query.StorageParsedQuery;
 import com.stratio.crossdata.core.query.StoragePlannedQuery;
 import com.stratio.crossdata.core.query.StorageValidatedQuery;
+import com.stratio.crossdata.core.statements.InsertBatchStatement;
 import com.stratio.crossdata.core.validator.Validator;
 
 /**
@@ -289,13 +294,47 @@ public class APIManager {
     }
 
     private Result planInsert(Command cmd) {
-        //TODO: Validate table name & column names
-        //TODO: Plan query & Choose connector
+        //Validate table name & column names
+        StorageValidatedQuery validatedQuery = null;
+        try {
+            validatedQuery = ValidateInsertBatch(cmd);
+        } catch (ValidationException | IgnoreQueryException e) {
+            ErrorResult errorResult = new ErrorResult(e);
+            errorResult.setQueryId(cmd.queryId());
+            return errorResult;
+        }
+        //Plan query & Choose connector
+        StoragePlannedQuery plannedQuery = null;
+        try {
+            plannedQuery = planner.planQuery(validatedQuery);
+        } catch (PlanningException e) {
+            ErrorResult errorResult = new ErrorResult(e);
+            errorResult.setQueryId(cmd.queryId());
+            return errorResult;
+        }
         //TODO: Create topic
-        //TODO: Send topic subscription to chosen connector
-        //TODO: Wait for result from chosen connector
-        //TODO: Send topic production to driver/client (sender)
-        return CommandResult.createCommandResult("topic_name").withQueryId(cmd.queryId());
+        //TODO: Send topic subscription to chosen connector and indicate driver node
+        return new PlanInsertResult(
+                plannedQuery.getExecutionWorkflow().getQueryId(),
+                plannedQuery.getExecutionWorkflow().getSender(),
+                ((StorageWorkflow) plannedQuery.getExecutionWorkflow()).getClusterName(),
+                ((StorageWorkflow) plannedQuery.getExecutionWorkflow()).getTableName());
+    }
+
+    private StorageValidatedQuery ValidateInsertBatch(Command cmd) throws ValidationException, IgnoreQueryException {
+        InsertBatchStatement insertBatchStatement = new InsertBatchStatement(
+                (String) cmd.params().get(0),
+                (List<String>) cmd.params().get(1));
+        String qualifiedTableName = (String) cmd.params().get(0);
+        TableName tableName = new TableName(qualifiedTableName.split(".")[0], qualifiedTableName.split(".")[1]);
+        StorageValidatedQuery validatedQuery = (StorageValidatedQuery) validator.validate(
+                new StorageParsedQuery(
+                        new BaseQuery(cmd.queryId(),
+                                "INSERT BATCH TO " + tableName,
+                                tableName.getCatalogName(),
+                                cmd.sessionId()),
+                        insertBatchStatement));
+        return validatedQuery;
     }
 
     private Result describeSystem() {
@@ -427,7 +466,8 @@ public class APIManager {
 
             stringBuilder.append("\t").append("Functions: ").append(System.getProperty("line.separator"));
             for (FunctionType function : functions) {
-                stringBuilder.append("\t\t").append(function.getFunctionName()).append(": ").append(function.getDescription())
+                stringBuilder.append("\t\t").append(function.getFunctionName()).append(
+                        ": ").append(function.getDescription())
                         .append(System.getProperty("line.separator"));
             }
 

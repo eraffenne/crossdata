@@ -329,7 +329,7 @@ public enum ValidationTypes {
     },
     MUST_EXIST_COLUMN {
         /**
-         * Validates if the Column exist.
+         * Validates if the Column exists.
          * @param parsedQuery the IParsedQuery to validate.
          * @param parentsTableNames a java.util.Set of TableName, used to validate selects.
          * @param validatorHelper a instance of ValidatorHelper that encapsulate the logic.

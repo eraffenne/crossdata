@@ -29,6 +29,7 @@ import com.stratio.crossdata.common.data.{ConnectorName, DataStoreName, _}
 import com.stratio.crossdata.common.exceptions._
 import com.stratio.crossdata.common.exceptions.validation.{ExistNameException, NotExistNameException}
 import com.stratio.crossdata.common.manifest.CrossdataManifest
+import com.stratio.crossdata.common.metadata.DataType
 import scala.collection.JavaConversions._
 import com.stratio.crossdata.common.result._
 import com.stratio.crossdata.communication.Disconnect
@@ -791,11 +792,27 @@ class BasicDriver(basicDriverConfig: BasicDriverConfig) {
     if (sessionId.isEmpty) {
       throw new ConnectionException("You must connect to cluster")
     }
-    val queryId = UUID.randomUUID().toString
     val firstLine = io.Source.fromFile(file).getLines().next().split(",").toList
-    val params: List[AnyRef] = tableName :: firstLine :: Nil
+    val dataLines = io.Source.fromFile(file).getLines().drop(1)
+    insertRows(tableName, firstLine, dataLines, batchSize, pause)
+  }
+
+  def insertRows(tableName: String,
+                 columnNames: List[String],
+                 rows: util.Iterator[String],
+                 batchSize: Integer,
+                 pause: TimeUnit): Result ={
+    if (sessionId.isEmpty) {
+      throw new ConnectionException("You must connect to cluster")
+    }
+    var table = tableName
+    if(!table.contains(".")){
+        table = currentCatalog + "." + table
+    }
+    val queryId = UUID.randomUUID().toString
+    val params: List[AnyRef] = table :: columnNames :: Nil
     val command = new Command(queryId, APICommand.PLAN_INSERT, params, sessionId)
-    val batchResultHandler:BatchResultHandler = new BatchResultHandler();
+    val batchResultHandler: BatchResultHandler = new BatchResultHandler(queryId, rows, batchSize, pause);
     queries.put(queryId.toString, new QueryData(batchResultHandler, command.toString, sessionId))
     sendQuery(command)
     InProgressResult.createInProgressResult(queryId.toString)

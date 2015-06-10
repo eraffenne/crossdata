@@ -19,6 +19,7 @@
 package com.stratio.crossdata.common.connector;
 
 import java.util.Collection;
+import java.util.List;
 
 import com.stratio.crossdata.common.data.ClusterName;
 import com.stratio.crossdata.common.data.Row;
@@ -58,6 +59,23 @@ public interface IStorageEngine {
      *                            supported by the connector or ExecutionException if the execution fails.
      */
     void insert(ClusterName targetCluster, TableMetadata targetTable, Collection<Row> rows, boolean isNotExists)
+            throws ConnectorException;
+
+    /**
+     * Insert a collection of rows in a table.
+     *
+     * @param targetCluster Target cluster.
+     * @param targetTable   Target table metadata including fully qualified including catalog.
+     * @param rows          Collection of rows to be inserted.
+     * @param isNotExists   Insert only if primary key doesn't exist yet.
+     * @throws ConnectorException Use UnsupportedException If the required set of operations are not
+     *                            supported by the connector or ExecutionException if the execution fails.
+     */
+    void insertBatch(
+            ClusterName targetCluster,
+            TableMetadata targetTable,
+            Collection<List<Object>> rows,
+            boolean isNotExists)
             throws ConnectorException;
 
     /**

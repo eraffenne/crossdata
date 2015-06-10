@@ -183,17 +183,6 @@ public class InsertIntoStatement extends StorageStatement {
         return tableName.getCatalogName();
     }
 
-    /**
-     * Return the list of columns to be assigned.
-     *
-     * @deprecated use {@link #getColumns()} instead.
-     * @return the list of columns to be assigned.
-     */
-    @Deprecated
-    public List<ColumnName> getIds() {
-        return ids;
-    }
-
     public List<Selector> getCellValues() {
         return cellValues;
     }

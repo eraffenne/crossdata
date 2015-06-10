@@ -1,4 +1,5 @@
 /*
+ *
  * Licensed to STRATIO (C) under one or more contributor license agreements.
  * See the NOTICE file distributed with this work for additional information
  * regarding copyright ownership.  The STRATIO (C) licenses this file
@@ -14,29 +15,25 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ *
  */
 
-package com.stratio.crossdata.driver.result
+package com.stratio.crossdata.common.result;
 
-import java.util.concurrent.TimeUnit
+import com.stratio.crossdata.common.data.ClusterName;
+import com.stratio.crossdata.common.data.TableName;
 
-import com.stratio.crossdata.common.result._
+public class PlanInsertResult extends Result {
 
-class BatchResultHandler(topicName: String, rows: Iterator[String], batchSize: Integer, pause: TimeUnit)
-  extends IDriverResultHandler {
+    private final String sender;
+    private final ClusterName clusterName;
+    private final TableName tableName;
 
-  override def processAck(queryId: String, status: QueryStatus): Unit = {
-
-  }
-
-  override def processResult(result: Result): Unit = synchronized {
-    val batchResult: CommandResult = result.asInstanceOf[CommandResult]
-    val topic: String = batchResult.getResult.asInstanceOf[String]
-    // TODO: Create Kafka producer using topicName, rows, batchSize & pause
-  }
-
-  override def processError(errorResult: Result): Unit = synchronized {
-
-  }
-
+    public PlanInsertResult(String queryId, String sender, ClusterName clusterName, TableName tableName) {
+        this.queryId = queryId;
+        this.sender = sender;
+        this.clusterName = clusterName;
+        this.tableName = tableName;
+    }
 }

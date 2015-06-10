@@ -61,15 +61,18 @@ class APIActor(apiManager: APIManager, coordinatorActor: ActorRef) extends Actor
 
         val result = apiManager.processRequest(cmd)
         result match {
-          case resetServerData : ResetServerDataResult => {
+          case resetServerData: ResetServerDataResult => {
             log.debug(resetServerData)
 
-            for (forceDetachCommand <- resetServerData.getResetCommands().toArray){
+            for (forceDetachCommand <- resetServerData.getResetCommands().toArray) {
               log.debug(forceDetachCommand)
               coordinatorActor forward forceDetachCommand
             }
 
             sender ! resetServerData.getResult;
+          } case planInsertResult: PlanInsertResult =>{
+            sender ! ACK(cmd.queryId, QueryStatus.IN_PROGRESS)
+            coordinatorActor forward planInsertResult
           } case result =>{
             sender ! result;
           }
