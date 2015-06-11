@@ -57,7 +57,6 @@ import com.stratio.crossdata.common.exceptions.validation.NotExistNameException;
 import com.stratio.crossdata.common.executionplan.ExecutionType;
 import com.stratio.crossdata.common.executionplan.ManagementWorkflow;
 import com.stratio.crossdata.common.executionplan.ResultType;
-import com.stratio.crossdata.common.executionplan.StorageWorkflow;
 import com.stratio.crossdata.common.manifest.BehaviorsType;
 import com.stratio.crossdata.common.manifest.ConnectorFunctionsType;
 import com.stratio.crossdata.common.manifest.ConnectorType;
@@ -95,7 +94,6 @@ import com.stratio.crossdata.core.query.BaseQuery;
 import com.stratio.crossdata.core.query.ForceDetachQuery;
 import com.stratio.crossdata.core.query.IParsedQuery;
 import com.stratio.crossdata.core.query.IValidatedQuery;
-import com.stratio.crossdata.core.query.MetadataParsedQuery;
 import com.stratio.crossdata.core.query.MetadataPlannedQuery;
 import com.stratio.crossdata.core.query.MetadataValidatedQuery;
 import com.stratio.crossdata.core.query.SelectPlannedQuery;
@@ -312,13 +310,7 @@ public class APIManager {
             errorResult.setQueryId(cmd.queryId());
             return errorResult;
         }
-        //TODO: Create topic
-        //TODO: Send topic subscription to chosen connector and indicate driver node
-        return new PlanInsertResult(
-                plannedQuery.getExecutionWorkflow().getQueryId(),
-                plannedQuery.getExecutionWorkflow().getSender(),
-                ((StorageWorkflow) plannedQuery.getExecutionWorkflow()).getClusterName(),
-                ((StorageWorkflow) plannedQuery.getExecutionWorkflow()).getTableName());
+        return new PlanInsertResult(plannedQuery.getConnector());
     }
 
     private StorageValidatedQuery ValidateInsertBatch(Command cmd) throws ValidationException, IgnoreQueryException {

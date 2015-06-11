@@ -1728,6 +1728,11 @@ public class Planner {
         return storageWorkflow;
     }
 
+    private StorageWorkflow buildExecutionWorkflowInsertBatch(StorageValidatedQuery query, String queryId){
+        //TODO: Choose connector
+        //TODO: Create simple workflow
+    }
+
     private StorageWorkflow getStorageWorkflow(String queryId, InsertIntoStatement insertIntoStatement,
             TableMetadata tableMetadata, String actorRef, ExecutionWorkflow selectExecutionWorkflow,
             List<ClusterName> involvedClusters, List<ConnectorMetadata> candidates) {
@@ -1955,6 +1960,8 @@ public class Planner {
             storageWorkflow = buildExecutionWorkflowUpdate(query, queryId);
         } else if (query.getStatement() instanceof TruncateStatement) {
             storageWorkflow = buildExecutionWorkflowTruncate(query, queryId);
+        } else if (query.getStatement() instanceof InsertBatchStatement) {
+            storageWorkflow = buildExecutionWorkflowInsertBatch(query, queryId);
         } else {
             throw new PlanningException("This statement is not supported yet");
         }

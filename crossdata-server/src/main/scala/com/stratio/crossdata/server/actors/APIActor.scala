@@ -29,6 +29,7 @@ import com.stratio.crossdata.core.api.APIManager
 import com.stratio.crossdata.core.execution.{ExecutionInfo, ExecutionManager}
 import com.stratio.crossdata.core.metadata.MetadataManager
 import com.stratio.crossdata.core.query.MetadataValidatedQuery
+import PlanInsertResult
 import org.apache.log4j.Logger
 import akka.actor._
 
@@ -70,9 +71,6 @@ class APIActor(apiManager: APIManager, coordinatorActor: ActorRef) extends Actor
             }
 
             sender ! resetServerData.getResult;
-          } case planInsertResult: PlanInsertResult =>{
-            sender ! ACK(cmd.queryId, QueryStatus.IN_PROGRESS)
-            coordinatorActor forward planInsertResult
           } case result =>{
             sender ! result;
           }

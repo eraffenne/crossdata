@@ -30,9 +30,9 @@ class BatchResultHandler(topicName: String, rows: Iterator[String], batchSize: I
   }
 
   override def processResult(result: Result): Unit = synchronized {
-    val batchResult: CommandResult = result.asInstanceOf[CommandResult]
-    val topic: String = batchResult.getResult.asInstanceOf[String]
-    // TODO: Create Kafka producer using topicName, rows, batchSize & pause
+    val batchResult: PlanInsertResult = result.asInstanceOf[PlanInsertResult]
+    val topic: String = batchResult.getConnector
+    // TODO: Create Kafka producer using topic, rows, batchSize & pause
   }
 
   override def processError(errorResult: Result): Unit = synchronized {

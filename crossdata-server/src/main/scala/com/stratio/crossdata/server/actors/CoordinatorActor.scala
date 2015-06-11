@@ -279,8 +279,6 @@ class CoordinatorActor(connectorMgr: ActorRef, coordinator: Coordinator) extends
 
   }
 
-
-
   def manageWorkflow(queryId: String, workflow: ExecutionWorkflow, explicitSender: Option[String]) = workflow match {
 
     case metadataWorkflow: MetadataWorkflow => {

@@ -21,19 +21,18 @@
 
 package com.stratio.crossdata.common.result;
 
-import com.stratio.crossdata.common.data.ClusterName;
-import com.stratio.crossdata.common.data.TableName;
+import com.stratio.crossdata.common.result.Result;
 
 public class PlanInsertResult extends Result {
 
-    private final String sender;
-    private final ClusterName clusterName;
-    private final TableName tableName;
+    private final String connector;
 
-    public PlanInsertResult(String queryId, String sender, ClusterName clusterName, TableName tableName) {
-        this.queryId = queryId;
-        this.sender = sender;
-        this.clusterName = clusterName;
-        this.tableName = tableName;
+    public PlanInsertResult(String connector) {
+        super();
+        this.connector = connector;
+    }
+
+    public String getConnector() {
+        return connector;
     }
 }
