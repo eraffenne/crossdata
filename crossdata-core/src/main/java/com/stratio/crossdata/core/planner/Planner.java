@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.google.common.collect.Sets;
 import com.stratio.crossdata.common.metadata.*;
 import com.stratio.crossdata.core.planner.utils.ConnectorPriorityComparator;
 import org.apache.log4j.Logger;
@@ -1728,9 +1729,33 @@ public class Planner {
         return storageWorkflow;
     }
 
-    private StorageWorkflow buildExecutionWorkflowInsertBatch(StorageValidatedQuery query, String queryId){
-        //TODO: Choose connector
-        //TODO: Create simple workflow
+    /**
+     * Build a workflow to notify the write buffer config.
+     */
+    private StorageWorkflow buildExecutionWorkflowInsertBatch(StorageValidatedQuery query, String queryId) throws PlanningException {
+        StorageWorkflow storageWorkflow = null;
+        InsertBatchStatement insertIntoStatement = (InsertBatchStatement) query.getStatement();
+
+        TableName tableName = insertIntoStatement.getTableName();
+        TableMetadata tableMetadata = getTableMetadata(tableName);
+        ClusterMetadata clusterMetadata = getClusterMetadata(tableMetadata.getClusterRef());
+
+        //String actorRef = findAnyActorRef(clusterMetadata, Status.ONLINE, Operations.INSERT_THROUGH_MESSAGE_BROKER);
+        List<ConnectorMetadata> connectorsMetadata = findCandidates(Arrays.asList(clusterMetadata.getName()), Sets.newHashSet(Operations.INSERT_THROUGH_MESSAGE_BROKER));
+        if (connectorsMetadata.isEmpty()){
+            throw new PlanningException("There is no connector online supporting "+Operations.INSERT_THROUGH_MESSAGE_BROKER);
+        }else{
+
+            String actorRef = connectorsMetadata.get(0).getActorRef(this.host);
+            //TODO use getActorRefs to create partitions => add partitions to storageWorkflow
+            storageWorkflow = new StorageWorkflow(queryId, actorRef, ExecutionType.PLAN_INSERT, ResultType.RESULTS);
+            storageWorkflow.setClusterName(tableMetadata.getClusterRef());
+            storageWorkflow.setTableMetadata(tableMetadata);
+            storageWorkflow.setIfNotExists(insertIntoStatement.isIfNotExists());
+            storageWorkflow.setConnectorName(connectorsMetadata.get(0).getName().getName());
+        }
+
+        return storageWorkflow;
     }
 
     private StorageWorkflow getStorageWorkflow(String queryId, InsertIntoStatement insertIntoStatement,

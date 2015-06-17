@@ -368,6 +368,11 @@ public enum Operations {
     INSERT_IF_NOT_EXISTS("INSERT_IF_NOT_EXISTS"),
 
     /**
+     * The engine supports inserting data via message brokers using custom serializers.
+     */
+    INSERT_THROUGH_MESSAGE_BROKER("INSERT_THROUGH_MESSAGE_BROKER"),
+
+    /**
      * The engine supports unconditional deletes.
      */
     DELETE_NO_FILTERS("DELETE_NO_FILTERS"),

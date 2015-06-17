@@ -41,6 +41,7 @@ import com.stratio.crossdata.communication.Update;
 public class StorageWorkflow extends ExecutionWorkflow {
 
     private static final long serialVersionUID = 3929350966531076463L;
+
     private ClusterName clusterName = null;
 
     private TableMetadata tableMetadata = null;
@@ -56,6 +57,8 @@ public class StorageWorkflow extends ExecutionWorkflow {
     private Collection<Relation> assignments = null;
 
     private boolean ifNotExists;
+
+    private String connectorName;
 
     private ExecutionWorkflow previousExecutionWorkflow;
 
@@ -158,7 +161,13 @@ public class StorageWorkflow extends ExecutionWorkflow {
         this.ifNotExists = ifNotExists;
     }
 
+    public String getConnectorName() {
+        return connectorName;
+    }
 
+    public void setConnectorName(String connectorName) {
+        this.connectorName = connectorName;
+    }
 
     public ExecutionWorkflow getPreviousExecutionWorkflow() {
         return previousExecutionWorkflow;

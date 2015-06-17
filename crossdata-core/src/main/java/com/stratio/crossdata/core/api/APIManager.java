@@ -57,6 +57,7 @@ import com.stratio.crossdata.common.exceptions.validation.NotExistNameException;
 import com.stratio.crossdata.common.executionplan.ExecutionType;
 import com.stratio.crossdata.common.executionplan.ManagementWorkflow;
 import com.stratio.crossdata.common.executionplan.ResultType;
+import com.stratio.crossdata.common.executionplan.StorageWorkflow;
 import com.stratio.crossdata.common.manifest.BehaviorsType;
 import com.stratio.crossdata.common.manifest.ConnectorFunctionsType;
 import com.stratio.crossdata.common.manifest.ConnectorType;
@@ -148,7 +149,6 @@ public class APIManager {
 
     private Result processRequestListCatalogs(){
         Result result;
-        LOG.info("Processing " + APICommand.LIST_CATALOGS().toString());
         LOG.info(PROCESSING + APICommand.LIST_CATALOGS().toString());
         List<CatalogMetadata> catalogsMetadata = MetadataManager.MANAGER.getCatalogs();
 
@@ -310,15 +310,15 @@ public class APIManager {
             errorResult.setQueryId(cmd.queryId());
             return errorResult;
         }
-        return new PlanInsertResult(plannedQuery.getConnector());
+        return new PlanInsertResult(((StorageWorkflow)plannedQuery.getExecutionWorkflow()).getConnectorName());
     }
 
     private StorageValidatedQuery ValidateInsertBatch(Command cmd) throws ValidationException, IgnoreQueryException {
         InsertBatchStatement insertBatchStatement = new InsertBatchStatement(
                 (String) cmd.params().get(0),
-                (List<String>) cmd.params().get(1));
+                (List) cmd.params().get(1));
         String qualifiedTableName = (String) cmd.params().get(0);
-        TableName tableName = new TableName(qualifiedTableName.split(".")[0], qualifiedTableName.split(".")[1]);
+        TableName tableName = new TableName(qualifiedTableName.split("\\.")[0], qualifiedTableName.split("\\.")[1]);
         StorageValidatedQuery validatedQuery = (StorageValidatedQuery) validator.validate(
                 new StorageParsedQuery(
                         new BaseQuery(cmd.queryId(),
@@ -473,7 +473,6 @@ public class APIManager {
 
     private Result describeCatalog(CatalogName name) {
         Result result;
-        LOG.info("Processing " + APICommand.DESCRIBE_CATALOG().toString());
         LOG.info(PROCESSING + APICommand.DESCRIBE_CATALOG().toString());
         try {
             CatalogMetadata catalogMetadata = MetadataManager.MANAGER.getCatalog(name);
@@ -509,7 +508,6 @@ public class APIManager {
 
     private Result describeTable(TableName name) {
         Result result;
-        LOG.info("Processing " + APICommand.DESCRIBE_TABLE().toString());
         LOG.info(PROCESSING + APICommand.DESCRIBE_TABLE().toString());
 
         try {

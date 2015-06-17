@@ -19,6 +19,7 @@
 package com.stratio.connector.twitter;
 
 import java.util.Collection;
+import java.util.List;
 
 import com.stratio.crossdata.common.connector.IStorageEngine;
 import com.stratio.crossdata.common.data.ClusterName;
@@ -66,6 +67,11 @@ public class TwitterStorageEngine implements IStorageEngine {
     @Override
     public void insert(ClusterName targetCluster, TableMetadata targetTable, Collection<Row> rows,
             boolean isNotExists) throws ConnectorException {
+        throw new UnsupportedException("Operation not supported");
+    }
+
+    @Override public void insertBatch(ClusterName targetCluster, TableMetadata targetTable,
+                    Collection<List<Object>> rows, boolean isNotExists) throws ConnectorException {
         throw new UnsupportedException("Operation not supported");
     }
 

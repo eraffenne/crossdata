@@ -22,7 +22,13 @@ import com.stratio.crossdata.common.ask.APICommand.APICommand
 
 /**
  * Class that wrappers the calls to the CROSSDATA API.
- * @param commandType Type of command to be executed.
  */
-case class Command(queryId: String, commandType: APICommand, params: java.util.List[AnyRef], sessionId: String)
+trait Command{
+  def queryId: String
+  def commandType: APICommand
+  def params: java.util.List[AnyRef]
+  def sessionId: String
+}
+case class SyncCommand(override val queryId: String,override val commandType: APICommand, override val  params: java.util.List[AnyRef], override val sessionId: String) extends Command
+case class AsyncCommand(override val queryId: String,override val commandType: APICommand, override val  params: java.util.List[AnyRef], override val sessionId: String) extends Command
 

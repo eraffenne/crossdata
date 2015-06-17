@@ -72,5 +72,6 @@
         <operation>PAGINATION</operation>
 
         <operation>ASYNC_QUERY</operation>
+        <operation>INSERT_THROUGH_MESSAGE_BROKER</operation>
     </SupportedOperations>
 </Connector>

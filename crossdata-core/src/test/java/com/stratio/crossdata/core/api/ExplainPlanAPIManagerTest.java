@@ -36,6 +36,7 @@ import org.testng.annotations.Test;
 
 import com.stratio.crossdata.common.ask.APICommand;
 import com.stratio.crossdata.common.ask.Command;
+import com.stratio.crossdata.common.ask.SyncCommand;
 import com.stratio.crossdata.common.data.CatalogName;
 import com.stratio.crossdata.common.data.ClusterName;
 import com.stratio.crossdata.common.data.DataStoreName;
@@ -120,13 +121,13 @@ public class ExplainPlanAPIManagerTest {
         List<Object> params = new ArrayList<>();
         params.add(statement);
         params.add("demo");
-        return new Command("QID", APICommand.EXPLAIN_PLAN(), params,"sessionTest");
+        return new SyncCommand("QID", APICommand.EXPLAIN_PLAN(), params,"sessionTest");
     }
 
     @Test
     public void invalidExplainRequest() {
         List<Object> params = new ArrayList<>();
-        Command cmd = new Command("QID", APICommand.EXPLAIN_PLAN(), params,"sessionTest");
+        Command cmd = new SyncCommand("QID", APICommand.EXPLAIN_PLAN(), params,"sessionTest");
         Result r = MetadataManagerTestHelper.HELPER.getApiManager().processRequest(cmd);
         assertNotNull(r, "Expecting result");
         assertEquals(r.getClass(), ErrorResult.class, "Expecting error result");

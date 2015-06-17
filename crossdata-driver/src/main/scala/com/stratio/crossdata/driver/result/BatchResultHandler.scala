@@ -18,25 +18,70 @@
 
 package com.stratio.crossdata.driver.result
 
-import java.util.concurrent.TimeUnit
 
 import com.stratio.crossdata.common.result._
+import com.stratio.crossdata.driver.kafka.KafkaProducer
+import org.apache.log4j.Logger
 
-class BatchResultHandler(topicName: String, rows: Iterator[String], batchSize: Integer, pause: TimeUnit)
+import scala.concurrent.Future
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.ExecutionContext.Implicits.global
+
+/**
+ * Result handler for insert using message brokers.
+ */
+class BatchResultHandler(queryId: String, clusterName:String, qTableName: String, rows: Iterator[String], batchSize: Integer, pause: FiniteDuration)
   extends IDriverResultHandler {
+
+ lazy val logger = Logger.getLogger(classOf[BatchResultHandler])
 
   override def processAck(queryId: String, status: QueryStatus): Unit = {
 
   }
 
-  override def processResult(result: Result): Unit = synchronized {
+  override def processResult(result: Result): Unit = {
     val batchResult: PlanInsertResult = result.asInstanceOf[PlanInsertResult]
     val topic: String = batchResult.getConnector
+
     // TODO: Create Kafka producer using topic, rows, batchSize & pause
+    val kProducer = KafkaProducer(topic)
+
+    // TODO Create topic if not exists
+    kProducer.createTopicIfNotExists()
+
+    val insertResult = Future {
+      var count = 0
+      for (row <- rows) {
+        count = count + 1
+        kProducer.send(clusterName+"."+qTableName, row)
+        if(count % batchSize == 0) {
+          Thread.sleep(pause.toMillis)
+        }
+      }
+    }
+
+    insertResult onFailure {
+      case error => logger.error (s"An error has occured: ${error.getMessage}")
+    }
+
+    insertResult onSuccess {
+      case _ => logger.info ("Data inserted into kafka successfully")
+    }
+
+    insertResult onComplete  {
+      case _ => {
+        logger.info ("Insert completed")
+        kProducer.close()
+      }
+    }
+
   }
 
-  override def processError(errorResult: Result): Unit = synchronized {
-
+  override def processError(errorResult: Result): Unit = {
+    implicit def resToError(p: Result) = p.asInstanceOf[ErrorResult]
+    logger.error(s"Error: ${errorResult.getErrorMessage}")
   }
+
+
 
 }

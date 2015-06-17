@@ -49,6 +49,7 @@ public enum ExecutionType {
     DELETE_ROWS,
     UPDATE_TABLE,
     TRUNCATE_TABLE,
+    PLAN_INSERT,
 
     //IQuery
     SELECT,

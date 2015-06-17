@@ -47,12 +47,22 @@ object DriverConfig {
    */
   val DRIVER_CONFIG_FILE = "external.config.filename"
   val DRIVER_CONFIG_RESOURCE = "external.config.resource"
+
+  val KafkaBrokerList="kafka.metadata.broker.list"
+  val KafkaRequestAcks="kafka.request.required.acks"
+  val KafkaProducerType="kafka.producer.type"
+  val ZookeeperServer="zookeeper.server"
 }
 
 trait DriverConfig extends CrossdataServerConfig {
   lazy val logger: Logger = ???
   lazy val retryTimes: Int = config.getInt(DriverConfig.DRIVER_RETRY_TIMES_KEY)
   lazy val retryDuration: Timeout = new Timeout(config.getMilliseconds(DriverConfig.DRIVER_RETRY_SECONDS_KEY))
+
+  lazy val brokerList = config.getString(DriverConfig.KafkaBrokerList)
+  lazy val requiredAcks = config.getInt(DriverConfig.KafkaRequestAcks)
+  lazy val producerType = config.getString(DriverConfig.KafkaProducerType)
+  lazy val zookeeperServer = config.getString(DriverConfig.ZookeeperServer)
 
   override val config: Config = {
     var defaultConfig = ConfigFactory.load(DriverConfig.BASIC_DRIVER_CONFIG).getConfig(DriverConfig.PARENT_CONFIG_NAME)

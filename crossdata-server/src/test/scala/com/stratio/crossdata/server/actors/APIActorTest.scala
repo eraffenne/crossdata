@@ -17,7 +17,7 @@
  */
 
 package com.stratio.crossdata.server.actors
-import com.stratio.crossdata.common.ask.{APICommand, Command}
+import com.stratio.crossdata.common.ask.{SyncCommand, APICommand, Command}
 import com.stratio.crossdata.common.result.Result
 import com.stratio.crossdata.server.config.{ServerConfig, ActorReceiveUtils}
 import org.apache.log4j.Logger
@@ -38,7 +38,7 @@ class APIActorTest extends ActorReceiveUtils with FunSuiteLike with ServerConfig
 
 
   test("Send COMMAND must WORK"){
-    val cmd=new Command("QID", APICommand.DESCRIBE_CONNECTORS,null,"sessionTest");
+    val cmd=new SyncCommand("QID", APICommand.DESCRIBE_CONNECTORS,null,"sessionTest");
     val future = (actorRef ? cmd).mapTo[Result]
     future.onSuccess {
       case r :Any => {

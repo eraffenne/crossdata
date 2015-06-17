@@ -148,7 +148,6 @@ class ConnectorManagerActor(cluster: Cluster) extends Actor with ActorLogging {
       persistDatastoreManifest(datastoreManifest)
     }
 
-
     case c: ConnectToConnectorResult => {
       logger.info("Connect result from " + sender)
       coordinatorActorRef forward c

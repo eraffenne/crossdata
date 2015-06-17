@@ -21,7 +21,7 @@ package com.stratio.crossdata.server.server
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{DefaultTimeout, ImplicitSender, TestKit}
-import com.stratio.crossdata.common.ask.{APICommand, Command}
+import com.stratio.crossdata.common.ask.{SyncCommand, APICommand, Command}
 import com.stratio.crossdata.common.result.{Result, MetadataResult}
 import com.stratio.crossdata.server.utilities.{TestKitUsageSpec, createEngine}
 import com.stratio.crossdata.core.engine.Engine
@@ -109,7 +109,7 @@ with ImplicitSender with DefaultTimeout with FunSuiteLike {
   test("API List tables from unknown catalog") {
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
     params.add("unknown")
-    val cmd: Command = new Command("QID", APICommand.LIST_TABLES, params,
+    val cmd: Command = new SyncCommand("QID", APICommand.LIST_TABLES, params,
       "sessionTest")
     var result: MetadataResult = null
     within(5000 millis) {

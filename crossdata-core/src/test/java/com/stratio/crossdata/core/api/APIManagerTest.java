@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
 
 import com.stratio.crossdata.common.ask.APICommand;
 import com.stratio.crossdata.common.ask.Command;
+import com.stratio.crossdata.common.ask.SyncCommand;
 import com.stratio.crossdata.common.data.CatalogName;
 import com.stratio.crossdata.common.data.ClusterName;
 import com.stratio.crossdata.common.data.ConnectorName;
@@ -111,7 +112,7 @@ public class APIManagerTest {
         List params = new ArrayList();
         params.add(dataStoreType);
 
-        Command cmd = new Command("QID", APICommand.ADD_MANIFEST(), params,"sessionTest");
+        Command cmd = new SyncCommand("QID", APICommand.ADD_MANIFEST(), params, "sessionTest");
 
         String expectedResult =
                 "CrossdataManifest added " + System.lineSeparator() + "DATASTORE" + System.lineSeparator() +
@@ -175,7 +176,7 @@ public class APIManagerTest {
         List params = new ArrayList();
         params.add(dataStoreType);
 
-        Command cmd = new Command("QID", APICommand.ADD_MANIFEST(), params,"sessionTest");
+        Command cmd = new SyncCommand("QID", APICommand.ADD_MANIFEST(), params,"sessionTest");
 
         String expectedResult =
                 "CrossdataManifest added " + System.lineSeparator() + "DATASTORE" + System.lineSeparator() +
@@ -234,7 +235,7 @@ public class APIManagerTest {
         List params = new ArrayList();
         params.add(connectorType);
 
-        Command cmd = new Command("QID", APICommand.ADD_MANIFEST(), params,"sessionTest");
+        Command cmd = new SyncCommand("QID", APICommand.ADD_MANIFEST(), params,"sessionTest");
 
         String expectedResult = "CrossdataManifest added " + System.lineSeparator() + "CONNECTOR" +
                 System.lineSeparator() + "ConnectorName: connectorTest" + System.lineSeparator()
@@ -291,7 +292,7 @@ public class APIManagerTest {
         List params = new ArrayList();
         params.add(connectorType);
 
-        Command cmd = new Command("QID", APICommand.ADD_MANIFEST(), params,"sessionTest");
+        Command cmd = new SyncCommand("QID", APICommand.ADD_MANIFEST(), params,"sessionTest");
 
         String expectedResult = "CrossdataManifest added " + System.lineSeparator() + "CONNECTOR" +
                 System.lineSeparator() + "ConnectorName: connectorTest" + System.lineSeparator()
@@ -313,7 +314,7 @@ public class APIManagerTest {
     @Test(dependsOnMethods = { "testPersistConnector" })
     public void testListConnectors() throws Exception {
         APIManager ApiManager = new APIManager(parser, validator, planner);
-        Command cmd = new Command("QID", APICommand.DESCRIBE_CONNECTORS(), null,"sessionTest");
+        Command cmd = new SyncCommand("QID", APICommand.DESCRIBE_CONNECTORS(), null,"sessionTest");
         MetadataManagerTestHelper.HELPER.createTestConnector("connectorTest", new DataStoreName("datastoreTest"), "akkaActorRef");
         CommandResult result = (CommandResult) ApiManager.processRequest(cmd);
         String str = String.valueOf(result.getResult());
@@ -339,7 +340,7 @@ public class APIManagerTest {
     public void testResetMetadata() throws Exception {
         APIManager ApiManager = new APIManager(parser, validator, planner);
         MetadataManagerTestHelper.HELPER.createTestConnector("connectorTest2", new DataStoreName("datastoreTest"), "akkaActorRef");
-        Command cmd = new Command("QID", APICommand.RESET_SERVERDATA(), null,"sessionTest");
+        Command cmd = new SyncCommand("QID", APICommand.RESET_SERVERDATA(), null,"sessionTest");
         CommandResult result = (CommandResult) ApiManager.processRequest(cmd);
 
         String str = String.valueOf(result.getResult());
@@ -383,7 +384,7 @@ public class APIManagerTest {
         dataStoreType.setRequiredProperties(propertiesType);
 
         params.add(dataStoreType);
-        Command cmd = new Command("QID", APICommand.ADD_MANIFEST(), params,"sessionTest");
+        Command cmd = new SyncCommand("QID", APICommand.ADD_MANIFEST(), params,"sessionTest");
         Result result = ApiManager.processRequest(cmd);
         assertTrue(result instanceof CommandResult, "testProcessRequest should return a CommandResult");
         CommandResult cmdR = (CommandResult) result;
@@ -398,7 +399,7 @@ public class APIManagerTest {
     @Test
     public void cleanMetadataTest(){
         APIManager ApiManager = new APIManager(parser, validator, planner);
-        Command cmd = new Command("CLEAN", APICommand.CLEAN_METADATA(), new ArrayList<>(), "sessionTest");
+        Command cmd = new SyncCommand("CLEAN", APICommand.CLEAN_METADATA(), new ArrayList<>(), "sessionTest");
         Result result = ApiManager.processRequest(cmd);
         assertTrue(result instanceof CommandResult, "testProcessRequest should return a CommandResult");
         CommandResult cmdR = (CommandResult) result;
@@ -420,7 +421,7 @@ public class APIManagerTest {
         APIManager ApiManager = new APIManager(parser, validator, planner);
         List<Object> params=new ArrayList<>();
         params.add(new CatalogName("testCatalog"));
-        Command cmd = new Command("DescribeCatalog", APICommand.DESCRIBE_CATALOG(), params, "sessionTest");
+        Command cmd = new SyncCommand("DescribeCatalog", APICommand.DESCRIBE_CATALOG(), params, "sessionTest");
         Result result = ApiManager.processRequest(cmd);
         assertTrue(result instanceof MetadataResult, "testProcessRequest should return a MetadataResult");
         MetadataResult res = (MetadataResult) result;
@@ -432,7 +433,7 @@ public class APIManagerTest {
         APIManager ApiManager = new APIManager(parser, validator, planner);
         List<Object> params=new ArrayList<>();
         params.add(new ClusterName("production"));
-        Command cmd = new Command("DescribeCluster", APICommand.DESCRIBE_CLUSTER(), params, "sessionTest");
+        Command cmd = new SyncCommand("DescribeCluster", APICommand.DESCRIBE_CLUSTER(), params, "sessionTest");
         Result result = ApiManager.processRequest(cmd);
         assertTrue(result instanceof CommandResult, "testProcessRequest should return a CommandResult");
         CommandResult cmdR = (CommandResult) result;
@@ -449,7 +450,7 @@ public class APIManagerTest {
         APIManager ApiManager = new APIManager(parser, validator, planner);
         List<Object> params=new ArrayList<>();
 
-        Command cmd = new Command("DescribeCluster", APICommand.DESCRIBE_CLUSTERS(), params, "sessionTest");
+        Command cmd = new SyncCommand("DescribeCluster", APICommand.DESCRIBE_CLUSTERS(), params, "sessionTest");
         Result result = ApiManager.processRequest(cmd);
         assertTrue(result instanceof CommandResult, "testProcessRequest should return a CommandResult");
         CommandResult cmdR = (CommandResult) result;
@@ -465,7 +466,7 @@ public class APIManagerTest {
         APIManager ApiManager = new APIManager(parser, validator, planner);
         List<Object> params=new ArrayList<>();
         params.add(new ConnectorName("connector1"));
-        Command cmd = new Command("DescribeConnector", APICommand.DESCRIBE_CONNECTOR(), params, "sessionTest");
+        Command cmd = new SyncCommand("DescribeConnector", APICommand.DESCRIBE_CONNECTOR(), params, "sessionTest");
         Result result = ApiManager.processRequest(cmd);
         assertTrue(result instanceof CommandResult, "testProcessRequest should return a CommandResult");
         CommandResult cmdR = (CommandResult) result;
@@ -481,7 +482,7 @@ public class APIManagerTest {
         APIManager ApiManager = new APIManager(parser, validator, planner);
         List<Object> params=new ArrayList<>();
 
-        Command cmd = new Command("DescribeConnectors", APICommand.DESCRIBE_CONNECTORS(), params, "sessionTest");
+        Command cmd = new SyncCommand("DescribeConnectors", APICommand.DESCRIBE_CONNECTORS(), params, "sessionTest");
         Result result = ApiManager.processRequest(cmd);
         assertTrue(result instanceof CommandResult, "testProcessRequest should return a CommandResult");
         CommandResult cmdR = (CommandResult) result;
@@ -498,7 +499,7 @@ public class APIManagerTest {
         APIManager ApiManager = new APIManager(parser, validator, planner);
         List<Object> params=new ArrayList<>();
         params.add(new DataStoreName("dataStoreTest"));
-        Command cmd = new Command("DescribeDataStore", APICommand.DESCRIBE_DATASTORE(), params, "sessionTest");
+        Command cmd = new SyncCommand("DescribeDataStore", APICommand.DESCRIBE_DATASTORE(), params, "sessionTest");
         Result result = ApiManager.processRequest(cmd);
         assertTrue(result instanceof CommandResult, "testProcessRequest should return a CommandResult");
         CommandResult cmdR = (CommandResult) result;
@@ -514,7 +515,7 @@ public class APIManagerTest {
         APIManager ApiManager = new APIManager(parser, validator, planner);
         List<Object> params=new ArrayList<>();
 
-        Command cmd = new Command("DescribeDataStore", APICommand.DESCRIBE_DATASTORES(), params, "sessionTest");
+        Command cmd = new SyncCommand("DescribeDataStore", APICommand.DESCRIBE_DATASTORES(), params, "sessionTest");
         Result result = ApiManager.processRequest(cmd);
         assertTrue(result instanceof CommandResult, "testProcessRequest should return a CommandResult");
         CommandResult cmdR = (CommandResult) result;
@@ -530,7 +531,7 @@ public class APIManagerTest {
         APIManager ApiManager = new APIManager(parser, validator, planner);
         List<Object> params=new ArrayList<>();
 
-        Command cmd = new Command("DescribeSystem", APICommand.DESCRIBE_SYSTEM(), params, "sessionTest");
+        Command cmd = new SyncCommand("DescribeSystem", APICommand.DESCRIBE_SYSTEM(), params, "sessionTest");
         Result result = ApiManager.processRequest(cmd);
         assertTrue(result instanceof CommandResult, "testProcessRequest should return a CommandResult");
         CommandResult cmdR = (CommandResult) result;
@@ -550,7 +551,7 @@ public class APIManagerTest {
         APIManager ApiManager = new APIManager(parser, validator, planner);
         List<Object> params=new ArrayList<>();
         params.add(new CatalogName("testCatalog"));
-        Command cmd = new Command("DescribeTables", APICommand.DESCRIBE_TABLES(), params, "sessionTest");
+        Command cmd = new SyncCommand("DescribeTables", APICommand.DESCRIBE_TABLES(), params, "sessionTest");
         Result result = ApiManager.processRequest(cmd);
         assertTrue(result instanceof CommandResult, "testProcessRequest should return a CommandResult");
         CommandResult cmdR = (CommandResult) result;
@@ -566,7 +567,7 @@ public class APIManagerTest {
         APIManager ApiManager = new APIManager(parser, validator, planner);
         List<Object> params=new ArrayList<>();
         params.add(new TableName("testCatalog","testTable"));
-        Command cmd = new Command("DescribeTables", APICommand.DESCRIBE_TABLE(), params, "sessionTest");
+        Command cmd = new SyncCommand("DescribeTables", APICommand.DESCRIBE_TABLE(), params, "sessionTest");
         Result result = ApiManager.processRequest(cmd);
         assertTrue(result instanceof MetadataResult, "testProcessRequest should return a MetadataResult");
         MetadataResult res = (MetadataResult) result;

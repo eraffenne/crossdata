@@ -21,7 +21,6 @@
 
 package com.stratio.crossdata.common.result;
 
-import com.stratio.crossdata.common.result.Result;
 
 public class PlanInsertResult extends Result {
 

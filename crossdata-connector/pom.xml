@@ -88,6 +88,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka_2.10</artifactId>
+            <version>${kafka.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.scalamock</groupId>
             <artifactId>scalamock-core_2.10</artifactId>
             <version>3.0</version>

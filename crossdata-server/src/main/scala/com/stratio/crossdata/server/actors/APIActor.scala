@@ -19,21 +19,17 @@
 package com.stratio.crossdata.server.actors
 
 import akka.actor.{ActorSelection, Actor, Props}
-import akka.routing.Broadcast
 import com.stratio.crossdata.common.data.Status
-import com.stratio.crossdata.common.ask.{APICommand, Command}
+import com.stratio.crossdata.common.ask.{AsyncCommand, APICommand, Command}
 import com.stratio.crossdata.common.result._
-import com.stratio.crossdata.common.utils.{StringUtils, Constants}
+import com.stratio.crossdata.common.utils.Constants
 import com.stratio.crossdata.communication.{ACK,StopProcess, Request}
 import com.stratio.crossdata.core.api.APIManager
 import com.stratio.crossdata.core.execution.{ExecutionInfo, ExecutionManager}
 import com.stratio.crossdata.core.metadata.MetadataManager
-import com.stratio.crossdata.core.query.MetadataValidatedQuery
-import PlanInsertResult
 import org.apache.log4j.Logger
 import akka.actor._
 
-import scala.annotation.tailrec
 import scala.util.{Success, Try}
 
 object APIActor {
@@ -70,11 +66,17 @@ class APIActor(apiManager: APIManager, coordinatorActor: ActorRef) extends Actor
               coordinatorActor forward forceDetachCommand
             }
 
-            sender ! resetServerData.getResult;
-          } case result =>{
-            sender ! result;
+            sender ! resetServerData.getResult
+          }
+          case planInsert: PlanInsertResult => {
+            //TODO forward to connector //coordinatorActor forward
+            sender ! result
+          }
+          case result => {
+            sender ! result
           }
         }
+
       }
       finishTimer(timer)
     }

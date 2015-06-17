@@ -30,21 +30,57 @@ import com.stratio.crossdata.common.data.TableName;
 import com.stratio.crossdata.core.validator.requirements.ValidationRequirements;
 import com.stratio.crossdata.core.validator.requirements.ValidationTypes;
 
+/** Class that models a batch statement using an external buffer.
+*/
 public class InsertBatchStatement extends StorageStatement {
 
+    /**
+     * The name of the target table.
+     */
     private TableName tableName;
+
+    /**
+     * The list of columns to be assigned.
+     */
     private final List<ColumnName> columnNames = new ArrayList<>();
+
+    /**
+     * Indicates if exists "IF NOT EXISTS" clause.
+     */
+    private boolean ifNotExists;
+
+    /**
+     * The batch size.
+     */
+    private int batchSize;
+
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public void setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
+    }
+
+    public void setIfNotExists(boolean ifNotExists) {
+        this.ifNotExists = ifNotExists;
+    }
+
+    public void setTableName(TableName tableName) {
+        this.tableName = tableName;
+    }
 
     public InsertBatchStatement(String qualifiedTable, List<String> columnNames) {
         this.command = false;
-        String catalog = qualifiedTable.split(".")[0];
+        String catalog = qualifiedTable.split("\\.")[0];
         this.catalogInc = true;
         this.catalog = new CatalogName(catalog);
-        String table = qualifiedTable.split(".")[1];
+        String table = qualifiedTable.split("\\.")[1];
         this.tableName = new TableName(catalog, table);
         for(String columnName: columnNames){
             this.columnNames.add(new ColumnName(catalog, table, columnName));
         }
+
     }
 
     public TableName getTableName() {
@@ -62,9 +98,18 @@ public class InsertBatchStatement extends StorageStatement {
                 .add(ValidationTypes.MUST_EXIST_COLUMN);
     }
 
+    public boolean isIfNotExists() {
+        return ifNotExists;
+    }
+
     @Override
     public String toString() {
-        return "INSERT_BATCH(" + tableName + ", " + columnNames + ")";
+
+        StringBuilder sb = new StringBuilder("INSERT_BATCH(" + tableName + ", " + columnNames + ")");
+        if( isIfNotExists()) {
+            sb.append(" IF NOT EXISTS");
+        }
+        return sb.toString();
     }
 
 }

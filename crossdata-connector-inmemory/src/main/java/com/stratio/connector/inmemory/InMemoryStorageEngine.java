@@ -20,8 +20,10 @@ package com.stratio.connector.inmemory;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import com.stratio.connector.inmemory.datastore.InMemoryDatastore;
 import com.stratio.crossdata.common.connector.IStorageEngine;
 import com.stratio.crossdata.common.data.Cell;
@@ -39,6 +41,11 @@ import com.stratio.crossdata.common.statements.structures.Relation;
  * Class that implements {@link com.stratio.crossdata.common.connector.IStorageEngine}.
  */
 public class InMemoryStorageEngine implements IStorageEngine{
+
+    /**
+     * Class logger.
+     */
+    private static final Logger LOG = Logger.getLogger(InMemoryStorageEngine.class);
 
     /**
      * Link to the in memory connector.
@@ -81,6 +88,12 @@ public class InMemoryStorageEngine implements IStorageEngine{
         for(Row r : rows){
             insert(targetCluster, targetTable, r, ifNotExists);
         }
+    }
+
+    @Override public void insertBatch(ClusterName targetCluster, TableMetadata targetTable,
+                    Collection<List<Object>> rows, boolean isNotExists) throws ConnectorException {
+        LOG.info("Inserting into "+targetTable.getName()+ "values: "+rows);
+        //throw new UnsupportedException("INSERT FROM BROKER MESSAGE IS NOT SUPPORTED");
     }
 
     @Override

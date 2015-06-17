@@ -21,7 +21,7 @@ package com.stratio.crossdata.driver.actor
 import akka.actor._
 import akka.contrib.pattern.ClusterClient
 import akka.util.Timeout
-import com.stratio.crossdata.common.ask.{Command, Connect, Query}
+import com.stratio.crossdata.common.ask._
 import com.stratio.crossdata.common.result.{ErrorResult, Result}
 import com.stratio.crossdata.communication.{ACK, CPUUsage, Disconnect}
 import com.stratio.crossdata.driver.BasicDriver
@@ -29,13 +29,10 @@ import org.apache.log4j.Logger
 
 import scala.concurrent.duration._
 import akka.actor.SupervisorStrategy.{Stop, Escalate, Restart, Resume}
-import com.stratio.crossdata.common.ask.Connect
 import com.stratio.crossdata.communication.ACK
 import com.stratio.crossdata.communication.CPUUsage
 import akka.actor.OneForOneStrategy
-import com.stratio.crossdata.common.ask.Command
 import com.stratio.crossdata.communication.Disconnect
-import com.stratio.crossdata.common.ask.Query
 
 /**
  * Companion object.
@@ -127,13 +124,27 @@ class ProxyActor(clusterClientActor: ActorRef, remoteActor: String, driver: Basi
       clusterClientActor forward ClusterClient.Send(ProxyActor.remotePath(remoteActor), c, localAffinity)
     }
 
+    /* Send a query to the remote com.stratio.crossdata-server infrastructure. */
+    case message: Query => {
+      val dest=chooseServerNode()
+      if(dest.length<1)
+        clusterClientActor ! ClusterClient.Send(ProxyActor.remotePath(remoteActor), message, localAffinity)
+      else
+        context.actorSelection(dest) forward message
+    }
+
     /* API Command */
-    case cmd: Command => {
+    case cmd: SyncCommand => {
       val dest=chooseServerNode()
       if(dest.length<1)
         clusterClientActor forward ClusterClient.Send(ProxyActor.remotePath(remoteActor), cmd, localAffinity)
-      else 
+      else
         context.actorSelection(dest) forward cmd
+    }
+
+    case cmd: AsyncCommand => {
+      val dest=chooseServerNode()
+      clusterClientActor ! ClusterClient.Send(ProxyActor.remotePath(remoteActor), cmd, localAffinity)
     }
 
     /* ACK received */
@@ -144,15 +155,6 @@ class ProxyActor(clusterClientActor: ActorRef, remoteActor: String, driver: Basi
       } else {
         logger.warn("ACK not expected received: " + ack)
       }
-    }
-
-    /* Send a query to the remote com.stratio.crossdata-server infrastructure. */
-    case message: Query => {
-      val dest=chooseServerNode()
-      if(dest.length<1)
-        clusterClientActor ! ClusterClient.Send(ProxyActor.remotePath(remoteActor), message, localAffinity)
-      else
-        context.actorSelection(dest) forward message
     }
 
     case result: Result => {

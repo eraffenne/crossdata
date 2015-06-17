@@ -32,6 +32,8 @@ object ConnectConfig {
   val CONNECTOR_USER_CONFIG_FILE = "external.config.filename"
   val CONNECTOR_USER_CONFIG_RESOURCE = "external.config.resource"
   val CONNECTOR_ACTOR_NUM = "config.akka.number.connector-actor"
+
+  val ZookeeperConnectServer = "zookeeper.server"
 }
 
 trait ConnectConfig {
@@ -40,6 +42,10 @@ trait ConnectConfig {
   lazy val clusterName = config.getString(ConnectConfig.CONNECTOR_CLUSTER_NAME_KEY)
   lazy val actorName = config.getString(ConnectConfig.CONNECTOR_ACTOR_NAME_KEY)
   lazy val num_connector_actor: Int = config.getString(ConnectConfig.CONNECTOR_ACTOR_NUM).toInt
+
+  lazy val zookeeperServer = config.getString(ConnectConfig.ZookeeperConnectServer)
+
+
   val config: Config = {
 
     var defaultConfig = ConfigFactory.load(ConnectConfig.CONNECTOR_BASIC_CONFIG).getConfig(ConnectConfig.PARENT_CONFIG_NAME)

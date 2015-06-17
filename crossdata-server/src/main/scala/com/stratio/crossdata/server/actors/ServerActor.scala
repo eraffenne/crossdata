@@ -23,7 +23,7 @@ import java.util.{Random, UUID}
 import akka.actor.{OneForOneStrategy, Actor, Props, ReceiveTimeout}
 import akka.cluster.Cluster
 import akka.routing.{RoundRobinPool, DefaultResizer}
-import com.stratio.crossdata.common.ask.{Command, Connect, Query}
+import com.stratio.crossdata.common.ask.{AsyncCommand, Command, Connect, Query}
 import com.stratio.crossdata.common.result.{ConnectResult, DisconnectResult, Result}
 import com.stratio.crossdata.communication.Disconnect
 import com.stratio.crossdata.core.engine.Engine
@@ -66,28 +66,35 @@ class ServerActor(engine: Engine,cluster: Cluster) extends Actor with ServerConf
     }
 
   def receive : Receive= {
+
     case "watchload"=>
       loadWatcherActorRef forward "watchload"
+
     case query: Query =>{
       logger.info("Query received: " + query.statement.toString)
       parserActorRef forward query
     }
+
     case Connect(user,pass) => {
       logger.info(s"Welcome $user! from  ${sender.path.address} ( host =${sender.path.address}) ")
       sender ! ConnectResult.createConnectResult(UUID.randomUUID().toString)
     }
+
     case Disconnect(user) => {
       logger.info("Goodbye " + user + ".")
       sender ! DisconnectResult.createDisconnectResult(user)
     }
+
     case cmd: Command =>{
       logger.info("API Command call received " + cmd.commandType)
       APIActorRef forward cmd
     }
+
     case ReceiveTimeout => {
       logger.warn("ReceiveTimeout")
       //TODO Process ReceiveTimeout
     }
+
     case _ => {
       logger.error("Unknown message received by ServerActor");
       sender ! Result.createUnsupportedOperationErrorResult("Not recognized object")
