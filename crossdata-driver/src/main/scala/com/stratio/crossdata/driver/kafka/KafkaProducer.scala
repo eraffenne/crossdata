@@ -39,10 +39,11 @@ case class KafkaProducer(topic: String) extends DriverConfig with Closeable {
   override lazy val logger = Logger.getLogger(classOf[KafkaProducer])
 
   props.put("metadata.broker.list", brokerList)
-  //props.put("request.required.acks", new Integer(requiredAcks))
+  props.put("request.required.acks", requiredAcks)
   props.put("producer.type", producerType)
   props.put("serializer.class", "kafka.serializer.StringEncoder") //TODO set => props.put("serializer.class", "kafka.serializer.DefaultEncoder")
   props.put("key.serializer.class", "kafka.serializer.StringEncoder")
+  props.put("batch.size", asyncBatchSize)
   //TODO add more options (compression.codec, maxRetries, partitioner, timeouts, clientid)
 
   val producer = new Producer[String, String](new ProducerConfig(props)) //new Producer[String, Array[Byte]](new ProducerConfig(props))

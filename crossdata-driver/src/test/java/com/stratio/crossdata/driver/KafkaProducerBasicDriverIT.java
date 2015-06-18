@@ -217,18 +217,19 @@ public class KafkaProducerBasicDriverIT {
         List<String> rowList = new ArrayList<>();
         Random random = new Random();
 
-        for(int i = 0; i< 100; i++){
+        for(int i = 0; i< 10000; i++){
             rowList.add(i + row + random.nextInt(6));
         }
 
 
+	//ProducerRate=>100.000 msg/sg
         Result result = driver.insertRows(
                         "InMemoryCluster",
                         "tableTest",
                         Arrays.asList("id", "name", "description", "rating"),
                         rowList.iterator(),
-                        20,
-                        new FiniteDuration(100, TimeUnit.MILLISECONDS)
+                        100,
+                        new FiniteDuration(1, TimeUnit.MILLISECONDS)
                         );
 
         if(result instanceof ErrorResult){

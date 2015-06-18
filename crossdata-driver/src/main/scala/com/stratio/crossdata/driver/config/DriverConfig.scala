@@ -52,6 +52,7 @@ object DriverConfig {
   val KafkaRequestAcks="kafka.request.required.acks"
   val KafkaProducerType="kafka.producer.type"
   val ZookeeperServer="zookeeper.server"
+  val KafkaBatchSize="kafka.batch.size"
 }
 
 trait DriverConfig extends CrossdataServerConfig {
@@ -60,9 +61,10 @@ trait DriverConfig extends CrossdataServerConfig {
   lazy val retryDuration: Timeout = new Timeout(config.getMilliseconds(DriverConfig.DRIVER_RETRY_SECONDS_KEY))
 
   lazy val brokerList = config.getString(DriverConfig.KafkaBrokerList)
-  lazy val requiredAcks = config.getInt(DriverConfig.KafkaRequestAcks)
+  lazy val requiredAcks = config.getString(DriverConfig.KafkaRequestAcks)
   lazy val producerType = config.getString(DriverConfig.KafkaProducerType)
   lazy val zookeeperServer = config.getString(DriverConfig.ZookeeperServer)
+  lazy val asyncBatchSize = config.getString(DriverConfig.KafkaBatchSize)
 
   override val config: Config = {
     var defaultConfig = ConfigFactory.load(DriverConfig.BASIC_DRIVER_CONFIG).getConfig(DriverConfig.PARENT_CONFIG_NAME)
