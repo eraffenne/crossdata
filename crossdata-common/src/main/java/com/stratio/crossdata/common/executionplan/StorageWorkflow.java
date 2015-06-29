@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.stratio.crossdata.common.data.ClusterName;
+import com.stratio.crossdata.common.data.ColumnName;
 import com.stratio.crossdata.common.data.Row;
 import com.stratio.crossdata.common.data.TableName;
 import com.stratio.crossdata.common.exceptions.validation.CoordinationException;
@@ -35,6 +36,8 @@ import com.stratio.crossdata.communication.InsertBatch;
 import com.stratio.crossdata.communication.StorageOperation;
 import com.stratio.crossdata.communication.Truncate;
 import com.stratio.crossdata.communication.Update;
+
+import scala.Tuple2;
 
 /**
  * Storage related operations.
@@ -59,6 +62,11 @@ public class StorageWorkflow extends ExecutionWorkflow {
     private boolean ifNotExists;
 
     private ExecutionWorkflow previousExecutionWorkflow;
+
+    public Tuple2<scala.collection.immutable.List<String>, scala.collection.immutable.List<scala.collection.immutable.List<String>>> getBatchRows() {
+        return batchRows;
+    }
+
 
     /**
      * Class constructor.
@@ -174,4 +182,11 @@ public class StorageWorkflow extends ExecutionWorkflow {
     public void setPreviousExecutionWorkflow(ExecutionWorkflow previousExecutionWorkflow) {
         this.previousExecutionWorkflow = previousExecutionWorkflow;
     }
+
+    public void setBatchRows(scala.collection.immutable.List<String> stringColumns, scala.collection.immutable.List<scala.collection.immutable.List<String>> batchRows) {
+        this.batchRows = new Tuple2<>(stringColumns, batchRows);
+    }
+
+    private Tuple2<scala.collection.immutable.List<String>, scala.collection.immutable.List<scala.collection.immutable.List<String>>> batchRows = null;
+
 }

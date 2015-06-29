@@ -131,6 +131,15 @@ sealed trait TriggerOperation
 case class TriggerExecution(triggerWorkflow: QueryWorkflow, triggeredExecution: ExecutionInfo) extends TriggerOperation
 
 // ============================================================================
+//                                TriggerExecution
+// ============================================================================
+
+sealed trait TriggerOperation
+
+@SerialVersionUID(-665564236789475256L)
+case class TriggerExecution(triggerWorkflow: QueryWorkflow, triggeredExecution: ExecutionInfo) extends TriggerOperation
+
+// ============================================================================
 //                                IStorageEngine
 // ============================================================================
 

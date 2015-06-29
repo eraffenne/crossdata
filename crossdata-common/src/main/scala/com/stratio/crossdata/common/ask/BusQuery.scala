@@ -18,16 +18,7 @@
 
 package com.stratio.crossdata.common.ask
 
-import com.stratio.crossdata.common.ask.APICommand.APICommand
+class BusQuery(queryId: String, user: String, sessionId: String)
 
-/**
- * Class that wrappers the calls to the CROSSDATA API.
- */
-trait Command{
-  def queryId: String
-  def commandType: APICommand
-  def params: java.util.List[AnyRef]
-  def sessionId: String
-}
-case class SyncCommand(override val queryId: String,override val commandType: APICommand, override val  params: java.util.List[AnyRef], override val sessionId: String) extends Command
-case class AsyncCommand(override val queryId: String,override val commandType: APICommand, override val  params: java.util.List[AnyRef], override val sessionId: String) extends Command
+case class InsertBatchQuery(queryId: String, user: String, sessionId: String, fqTableName: String, columns: List[String], csvRows: List[List[String]]) extends BusQuery(queryId,user, sessionId)
+//TODO insert selected columns, set the order, etc.. instead of json

@@ -23,7 +23,7 @@ import java.util.{Random, UUID}
 import akka.actor.{OneForOneStrategy, Actor, Props, ReceiveTimeout}
 import akka.cluster.Cluster
 import akka.routing.{RoundRobinPool, DefaultResizer}
-import com.stratio.crossdata.common.ask.{Command, Connect, Query}
+import com.stratio.crossdata.common.ask.{BusQuery, Command, Connect, Query}
 import com.stratio.crossdata.common.result.{ConnectResult, DisconnectResult, Result}
 import com.stratio.crossdata.communication.Disconnect
 import com.stratio.crossdata.core.engine.Engine
@@ -60,30 +60,44 @@ class ServerActor(engine: Engine,cluster: Cluster) extends Actor with ServerConf
   val APIActorRef = context.actorOf( RoundRobinPool(num_api_actor, Some(resizer))
      .props(Props(classOf[APIActor], engine.getAPIManager, coordinatorActorRef )), "APIActor")
 
+  val busActorRef = context.actorOf(Props(classOf[BusActor], engine.getValidator), "BusActor")
+
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
       case _: Any => Resume
     }
 
   def receive : Receive= {
+
     case "watchload"=>
       loadWatcherActorRef forward "watchload"
+
     case query: Query =>{
       logger.info("Query received: " + query.statement.toString)
       parserActorRef forward query
     }
+
     case Connect(user,pass) => {
       logger.info(s"Welcome $user! from  ${sender.path.address} ( host =${sender.path.address}) ")
       sender ! ConnectResult.createConnectResult(UUID.randomUUID().toString)
     }
+
     case Disconnect(user) => {
       logger.info("Goodbye " + user + ".")
       sender ! DisconnectResult.createDisconnectResult(user)
     }
+
     case cmd: Command =>{
       logger.info("API Command call received " + cmd.commandType)
       APIActorRef forward cmd
     }
+
+    case insertBatch: BusQuery => {
+      logger.info("BusQuery received ")
+      busActorRef forward insertBatch
+    }
+
+
     case ReceiveTimeout => {
       logger.warn("ReceiveTimeout")
       //TODO Process ReceiveTimeout

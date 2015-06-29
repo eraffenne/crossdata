@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.google.common.collect.Sets;
 import com.stratio.crossdata.common.metadata.*;
 import com.stratio.crossdata.common.statements.structures.*;
 import com.stratio.crossdata.core.planner.utils.ConnectorPriorityComparator;
@@ -66,9 +67,6 @@ import com.stratio.crossdata.core.structures.ExtendedSelectSelector;
 import com.stratio.crossdata.core.structures.Join;
 import com.stratio.crossdata.core.utils.CoreUtils;
 import com.stratio.crossdata.core.validator.Validator;
-import org.apache.log4j.Logger;
-
-import java.util.*;
 
 /**
  * Class in charge of defining the set of {@link com.stratio.crossdata.common.logicalplan.LogicalStep}
@@ -1970,6 +1968,34 @@ public class Planner {
         return storageWorkflow;
     }
 
+    /**
+     * Build a workflow to notify the write buffer config.
+     */
+    private StorageWorkflow buildExecutionWorkflowInsertBatch(StorageValidatedQuery query, String queryId) throws PlanningException {
+        StorageWorkflow storageWorkflow = null;
+        InsertBatchStatement insertIntoStatement = (InsertBatchStatement) query.getStatement();
+
+        TableName tableName = insertIntoStatement.getTableName();
+        TableMetadata tableMetadata = getTableMetadata(tableName);
+        ClusterMetadata clusterMetadata = getClusterMetadata(tableMetadata.getClusterRef());
+
+        List<ConnectorMetadata> connectorsMetadata = findCandidates(Arrays.asList(clusterMetadata.getName()), Sets.newHashSet(Operations.INSERT));
+        //TODO INSERT_BATCH
+        if (connectorsMetadata.isEmpty()){
+            throw new PlanningException("There is no connector online supporting "+Operations.INSERT);
+        }else{
+            String actorRef = connectorsMetadata.get(0).getActorRef(this.host);
+            //TODO use getActorRefs to create partitions => add partitions to storageWorkflow
+            storageWorkflow = new StorageWorkflow(queryId, actorRef, ExecutionType.INSERT_RAW_BATCH, ResultType.RESULTS);
+            storageWorkflow.setClusterName(tableMetadata.getClusterRef());
+            storageWorkflow.setTableMetadata(tableMetadata);
+            storageWorkflow.setIfNotExists(insertIntoStatement.isIfNotExists());
+            storageWorkflow.setBatchRows(insertIntoStatement.getStringColumns(), insertIntoStatement.getRawRows());
+        }
+
+        return storageWorkflow;
+    }
+
     protected ExecutionWorkflow buildExecutionWorkflow(StorageValidatedQuery query) throws PlanningException {
         StorageWorkflow storageWorkflow;
         String queryId = query.getQueryId();
@@ -1982,6 +2008,8 @@ public class Planner {
             storageWorkflow = buildExecutionWorkflowUpdate(query, queryId);
         } else if (query.getStatement() instanceof TruncateStatement) {
             storageWorkflow = buildExecutionWorkflowTruncate(query, queryId);
+        } else if (query.getStatement() instanceof InsertBatchStatement) {
+            storageWorkflow = buildExecutionWorkflowInsertBatch(query, queryId);
         } else {
             throw new PlanningException("This statement is not supported yet");
         }

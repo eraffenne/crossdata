@@ -21,7 +21,7 @@ package com.stratio.crossdata.driver
 import java.util
 import java.util.UUID
 
-import com.stratio.crossdata.common.ask.{APICommand, Command, Query}
+import com.stratio.crossdata.common.ask.{SyncCommand, APICommand, Command, Query}
 import com.stratio.crossdata.common.data._
 import com.stratio.crossdata.common.exceptions._
 import com.stratio.crossdata.common.exceptions.validation.{ExistNameException, NotExistNameException}
@@ -257,6 +257,65 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
   }
 
 
+  //BatchInsert
+    //TODO send query
+/*
+  def insert( catalogName: String, tableName: String,  columnValue: Map[String, Any], ifNotExist: Boolean = false, options: Map[String, Any] = Map.empty[String, Any]): Result = {
+    val strBuilder = StringBuilder.newBuilder
+    strBuilder append s"INSERT INTO $catalogName.$tableName"
+    require(columnValue.nonEmpty)
+    strBuilder append( columnValue.keys mkString(" (", ", ", ")"))
+    strBuilder append " VALUES "
+    strBuilder append(mkStringValues(columnValue.values))
+    if (ifNotExist) strBuilder append " IF NOT EXISTS"
+    if (options.nonEmpty) strBuilder append " WITH " append json.JSONObject(options)
+    executeQuery(strBuilder append ";" mkString)
+  }
+
+  //COPY <file> TO <table-name> WITH BATCHSIZE=100 AND PAUSE=500 ms;
+  def insertRows(clusterName: String,
+                 tableName: String,
+                 file: File,
+                 batchSize: Integer,
+                 pause: FiniteDuration): Result ={
+    if (sessionId.isEmpty) {
+      throw new ConnectionException("You must connect to cluster")
+    }
+    val firstLine = io.Source.fromFile(file).getLines().next().split(",").toList
+    val dataLines = io.Source.fromFile(file).getLines().drop(1)
+    insertRows(clusterName, tableName, firstLine, dataLines, batchSize, pause)
+  }
+
+  def insertRows(fqtableName: String,
+                 columnNames: util.List[String],
+                 rows: util.Iterator[String],
+                 batchSize: Integer,
+                 pause: FiniteDuration): Result ={
+    if (sessionId.isEmpty) {
+      throw new ConnectionException("You must connect to cluster")
+    }
+    var table = tableName
+    if(!table.contains(".")){
+      table = currentCatalog + "." + table
+    }
+    val queryId = UUID.randomUUID().toString
+
+    val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
+    params.add(table)
+    params.add(columnNames)
+
+    val command = AsyncCommand(queryId, APICommand.PLAN_INSERT, params, sessionId)
+    val batchResultHandler: BatchResultHandler = new BatchResultHandler(queryId, clusterName, table, rows, batchSize, pause);
+    queries.put(queryId.toString, new QueryData(batchResultHandler, command.toString, sessionId))
+    sendQuery(command)
+    InProgressResult.createInProgressResult(queryId.toString)
+  }
+
+*/
+
+
+
+
   @throws(classOf[NotExistNameException])
   def updateCatalog(toExecute: String): Result = {
     //val newCatalog: String = toExecute.toLowerCase.replace("use ", "").replace(";", "").trim
@@ -314,7 +373,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
     params.add(processQueryId)
     val queryId = UUID.randomUUID().toString
-    basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.STOP_PROCESS, params,sessionId), 5 second)
+    basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.STOP_PROCESS, params,sessionId), 5 second)
 
   }
 
@@ -429,7 +488,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
    */
   def listCatalogs(): Result = {
     val queryId = UUID.randomUUID().toString
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.LIST_CATALOGS, null,sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.LIST_CATALOGS, null,sessionId),
       30 seconds,
       retry = 2)
     if(result.isInstanceOf[MetadataResult]){
@@ -448,7 +507,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
     params.add(catalogName)
     val queryId = UUID.randomUUID().toString
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.LIST_TABLES, params,sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.LIST_TABLES, params,sessionId),
       30 second, retry = 2)
     if(result.isInstanceOf[MetadataResult]){
       result.asInstanceOf[MetadataResult]
@@ -466,7 +525,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
     params.add(catalogName)
     params.add(tableName)
     val queryId = UUID.randomUUID().toString
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.LIST_COLUMNS, params, sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.LIST_COLUMNS, params, sessionId),
       30 second)
     if(result.isInstanceOf[MetadataResult]){
       result.asInstanceOf[MetadataResult]
@@ -485,7 +544,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
     params.add(manifest)
     val queryId = UUID.randomUUID().toString
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.ADD_MANIFEST, params, sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.ADD_MANIFEST, params, sessionId),
       30 second)
     if(result.isInstanceOf[CommandResult]){
       result.asInstanceOf[CommandResult]
@@ -529,7 +588,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
     params.add(manifestType.toString);
     params.add(manifestName)
     val queryId = UUID.randomUUID().toString
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.DROP_MANIFEST, params, sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.DROP_MANIFEST, params, sessionId),
       30 second)
     result.asInstanceOf[Result]
   }
@@ -540,7 +599,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
    */
   def resetServerdata(): Result = {
     val queryId = UUID.randomUUID().toString
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.RESET_SERVERDATA, null, sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.RESET_SERVERDATA, null, sessionId),
       30 second)
     if(result.isInstanceOf[CommandResult]){
       result.asInstanceOf[CommandResult]
@@ -555,7 +614,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
    */
   def cleanMetadata(): Result = {
     val queryId = UUID.randomUUID().toString
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.CLEAN_METADATA, null, sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.CLEAN_METADATA, null, sessionId),
       30 second)
     if(result.isInstanceOf[CommandResult]){
       result.asInstanceOf[CommandResult]
@@ -570,7 +629,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
    */
   def describeConnectors():Result = {
     val queryId = UUID.randomUUID().toString
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.DESCRIBE_CONNECTORS, null,sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.DESCRIBE_CONNECTORS, null,sessionId),
       30 second)
     if(result.isInstanceOf[CommandResult]){
       result.asInstanceOf[CommandResult]
@@ -587,7 +646,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
     val queryId = UUID.randomUUID().toString
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
     params.add(connectorName)
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.DESCRIBE_CONNECTOR, params, sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.DESCRIBE_CONNECTOR, params, sessionId),
       30 second)
     if(result.isInstanceOf[CommandResult]){
       result.asInstanceOf[CommandResult]
@@ -600,7 +659,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
     val queryId = UUID.randomUUID().toString
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
     params.add(catalogName)
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.DESCRIBE_CATALOG, params,sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.DESCRIBE_CATALOG, params,sessionId),
       30 second)
     if(result.isInstanceOf[MetadataResult]){
       result.asInstanceOf[MetadataResult]
@@ -617,7 +676,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
     val queryId = UUID.randomUUID().toString
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
     params.add(datastoreName)
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.DESCRIBE_DATASTORE, params,sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.DESCRIBE_DATASTORE, params,sessionId),
       30 second)
     if(result.isInstanceOf[CommandResult]){
       result.asInstanceOf[CommandResult]
@@ -630,7 +689,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
     val queryId = UUID.randomUUID().toString
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
     params.add(catalogName)
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.DESCRIBE_TABLES, params, sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.DESCRIBE_TABLES, params, sessionId),
       30 second)
     if(result.isInstanceOf[CommandResult]){
       result.asInstanceOf[CommandResult]
@@ -643,7 +702,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
     val queryId = UUID.randomUUID().toString
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
     params.add(tableName)
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.DESCRIBE_TABLE, params, sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.DESCRIBE_TABLE, params, sessionId),
       30 second)
     if(result.isInstanceOf[MetadataResult]){
       result.asInstanceOf[MetadataResult]
@@ -656,7 +715,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
     val queryId = UUID.randomUUID().toString
     val params: java.util.List[AnyRef] = new java.util.ArrayList[AnyRef]
     params.add(clusterName)
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.DESCRIBE_CLUSTER, params, sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.DESCRIBE_CLUSTER, params, sessionId),
       30 second)
     if(result.isInstanceOf[CommandResult]){
       result.asInstanceOf[CommandResult]
@@ -667,7 +726,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
 
   def describeDatastores(): Result = {
     val queryId = UUID.randomUUID().toString
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.DESCRIBE_DATASTORES, null, sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.DESCRIBE_DATASTORES, null, sessionId),
       30 second)
     if(result.isInstanceOf[CommandResult]){
       result.asInstanceOf[CommandResult]
@@ -678,7 +737,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
 
   def describeClusters(): Result = {
     val queryId = UUID.randomUUID().toString
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.DESCRIBE_CLUSTERS, null, sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.DESCRIBE_CLUSTERS, null, sessionId),
       30 second)
     if(result.isInstanceOf[CommandResult]){
       result.asInstanceOf[CommandResult]
@@ -693,7 +752,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
    */
   def describeSystem():Result = {
     val queryId = UUID.randomUUID().toString
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.DESCRIBE_SYSTEM, null,sessionId), 30 second)
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.DESCRIBE_SYSTEM, null,sessionId), 30 second)
     if(result.isInstanceOf[CommandResult]){
       result.asInstanceOf[CommandResult]
     } else {
@@ -729,7 +788,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
     params.add(query)
     params.add(currentCatalog)
     val queryId = UUID.randomUUID().toString
-    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new Command(queryId, APICommand.EXPLAIN_PLAN, params, sessionId),
+    val result = basicDriver.retryPolitics.askRetry(basicDriver.proxyActor, new SyncCommand(queryId, APICommand.EXPLAIN_PLAN, params, sessionId),
       30 second)
     result
   }
@@ -745,7 +804,7 @@ class DriverConnection(val sessionId: String, userId: String,  basicDriver: Basi
       queryData.resultHandler
     } else {
       logger.warn("Query " + queryId + " not found.")
-      return null
+      null
     }
   }
 
